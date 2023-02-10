@@ -81,12 +81,39 @@ fn main() {
 struct Model {
     _window: window::Id,
     particles: Vec<Particle>,
+    mouse_position: Point2,
+}
+
+fn mouse_pressed(app: &App, model: &mut Model, _button: MouseButton) {
+    println!("mouse pressed at position {}", model.mouse_position);
+    if let Some(close_particle) = model.particles.iter_mut().find(|p| {
+        let distance = p.position.distance(model.mouse_position);
+        println!("distance: {}", distance);
+        distance <= LENGTH
+    }) {
+        println!("clicked on particle!");
+        close_particle.animation = EnvelopeStage::AttackAnimation(Attack {
+            start_time: app.duration.since_start.as_millis(),
+            duration: 2000,
+        })
+    }
+}
+
+fn mouse_moved(_app: &App, model: &mut Model, pos: Point2) {
+    model.mouse_position = pos;
 }
 
 fn model(app: &App) -> Model {
-    let _window = app.new_window().view(view).build().unwrap();
+    let _window = app
+        .new_window()
+        .view(view)
+        .mouse_pressed(mouse_pressed)
+        .mouse_moved(mouse_moved)
+        .build()
+        .unwrap();
     Model {
         _window,
+        mouse_position: Point2::new(0., 0.),
         particles: vec![
             Particle {
                 position: Vec2::new(0., 0.),
@@ -102,7 +129,7 @@ fn model(app: &App) -> Model {
                 position: Vec2::new(-100., 50.),
                 brightness: 0.,
                 animation: EnvelopeStage::AttackAnimation(Attack {
-                    start_time: app.duration.since_prev_update.as_millis(),
+                    start_time: app.duration.since_start.as_millis(),
                     duration: 2000,
                 }),
             },
