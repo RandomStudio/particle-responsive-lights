@@ -1,9 +1,16 @@
 use nannou::prelude::*;
 
+const THICKNESS: f32 = 10.;
+const LENGTH: f32 = 200.;
+const ATTACK_DURATION: u128 = 125;
+const RELEASE_DURATION: u128 = 2500;
+
 pub trait Animation {
+    fn new(duration: u128, start_brightness: f32, start_time: u128) -> Self;
     fn duration(&self) -> u128;
     fn start_time(&self) -> u128;
-    fn from_to(&self) -> (f32, f32);
+
+    fn get_range(&self) -> (f32, f32);
 
     /// Update the animation with the current time, get the progress in the range `[0,1]`
     fn update(&self, current_time: u128) -> f32 {
@@ -13,7 +20,7 @@ pub trait Animation {
     }
 
     fn get_brightness_and_done(&self, current_time: u128) -> (f32, bool) {
-        let (from, to) = self.from_to();
+        let (from, to) = self.get_range();
         let progress = self.update(current_time);
         let brightness = map_range(progress, 0., 1., from, to);
         if progress > 1. {
@@ -33,33 +40,50 @@ struct Particle {
 struct Attack {
     start_time: u128,
     duration: u128,
+    range: (f32, f32),
 }
 
 impl Animation for Attack {
+    fn new(duration: u128, start_brightness: f32, start_time: u128) -> Self {
+        Attack {
+            start_time,
+            duration,
+            range: (start_brightness, 1.0),
+        }
+    }
+
     fn start_time(&self) -> u128 {
         self.start_time
     }
     fn duration(&self) -> u128 {
         self.duration
     }
-    fn from_to(&self) -> (f32, f32) {
-        (0., 1.0)
+    fn get_range(&self) -> (f32, f32) {
+        self.range
     }
 }
 struct Release {
     start_time: u128,
     duration: u128,
+    range: (f32, f32),
 }
 
 impl Animation for Release {
+    fn new(duration: u128, start_brightness: f32, start_time: u128) -> Self {
+        Release {
+            start_time,
+            duration,
+            range: (start_brightness, 0.0),
+        }
+    }
     fn start_time(&self) -> u128 {
         self.start_time
     }
     fn duration(&self) -> u128 {
         self.duration
     }
-    fn from_to(&self) -> (f32, f32) {
-        (1.0, 0.)
+    fn get_range(&self) -> (f32, f32) {
+        self.range
     }
 }
 
@@ -70,9 +94,6 @@ enum EnvelopeStage {
     ReleaseAnimation(Release),
     Idle(),
 }
-
-const THICKNESS: f32 = 5.;
-const LENGTH: f32 = 100.;
 
 fn main() {
     nannou::app(model).update(update).run();
@@ -88,14 +109,15 @@ fn mouse_pressed(app: &App, model: &mut Model, _button: MouseButton) {
     println!("mouse pressed at position {}", model.mouse_position);
     if let Some(close_particle) = model.particles.iter_mut().find(|p| {
         let distance = p.position.distance(model.mouse_position);
-        println!("distance: {}", distance);
-        distance <= LENGTH
+        // println!("distance: {}", distance);
+        distance <= LENGTH / 2.
     }) {
         println!("clicked on particle!");
-        close_particle.animation = EnvelopeStage::AttackAnimation(Attack {
-            start_time: app.duration.since_start.as_millis(),
-            duration: 2000,
-        })
+        close_particle.animation = EnvelopeStage::AttackAnimation(Attack::new(
+            ATTACK_DURATION,
+            close_particle.brightness,
+            app.duration.since_start.as_millis(),
+        ))
     }
 }
 
@@ -117,21 +139,23 @@ fn model(app: &App) -> Model {
         particles: vec![
             Particle {
                 position: Vec2::new(0., 0.),
-                brightness: 1.0,
+                brightness: 0.,
                 animation: EnvelopeStage::Idle(),
             },
             Particle {
                 position: Vec2::new(100., 100.),
-                brightness: 0.5,
+                brightness: 0.,
+                animation: EnvelopeStage::Idle(),
+            },
+            Particle {
+                position: Vec2::new(200., 25.),
+                brightness: 0.,
                 animation: EnvelopeStage::Idle(),
             },
             Particle {
                 position: Vec2::new(-100., 50.),
                 brightness: 0.,
-                animation: EnvelopeStage::AttackAnimation(Attack {
-                    start_time: app.duration.since_start.as_millis(),
-                    duration: 2000,
-                }),
+                animation: EnvelopeStage::Idle(),
             },
         ],
     }
@@ -148,10 +172,11 @@ fn update(app: &App, model: &mut Model, _update: Update) {
                 p.brightness = brightness;
                 if done {
                     println!("end Attack => Release");
-                    p.animation = EnvelopeStage::ReleaseAnimation(Release {
-                        start_time: current_time,
-                        duration: 5000,
-                    })
+                    p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
+                        RELEASE_DURATION,
+                        p.brightness,
+                        current_time,
+                    ))
                 }
             }
             EnvelopeStage::ReleaseAnimation(a) => {
