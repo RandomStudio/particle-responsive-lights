@@ -3,6 +3,7 @@ use nannou::prelude::*;
 pub trait Animated {
     fn duration(&self) -> u128;
     fn start_time(&self) -> u128;
+    fn from_to(&self) -> (f32, f32);
 
     /// Update the animation with the current time, get the progress in the range `[0,1]`
     fn update(&self, current_time: u128) -> f32 {
@@ -12,14 +13,12 @@ pub trait Animated {
     }
 }
 
-#[derive(Debug)]
 struct Particle {
     position: Point2,
     brightness: f32,
     animation: EnvelopeStage,
 }
 
-#[derive(Debug)]
 struct Attack {
     start_time: u128,
     duration: u128,
@@ -32,8 +31,10 @@ impl Animated for Attack {
     fn duration(&self) -> u128 {
         self.duration
     }
+    fn from_to(&self) -> (f32, f32) {
+        (0., 1.0)
+    }
 }
-#[derive(Debug)]
 struct Release {
     start_time: u128,
     duration: u128,
@@ -46,13 +47,14 @@ impl Animated for Release {
     fn duration(&self) -> u128 {
         self.duration
     }
+    fn from_to(&self) -> (f32, f32) {
+        (1.0, 0.)
+    }
 }
 
 // The animation concept is based on https://en.wikipedia.org/wiki/Envelope_(music)
-#[derive(Debug)]
 enum EnvelopeStage {
-    AttackAnimation(Attack),
-    ReleaseAnimation(Release),
+    Active(Box<dyn Animated>),
     Idle(),
 }
 
@@ -86,10 +88,10 @@ fn model(app: &App) -> Model {
             Particle {
                 position: Vec2::new(-100., 50.),
                 brightness: 0.,
-                animation: EnvelopeStage::AttackAnimation(Attack {
+                animation: EnvelopeStage::Active(Box::new(Attack {
                     start_time: app.duration.since_prev_update.as_millis(),
-                    duration: 5000,
-                }),
+                    duration: 2000,
+                })),
             },
         ],
     }
@@ -98,17 +100,49 @@ fn model(app: &App) -> Model {
 fn update(app: &App, model: &mut Model, _update: Update) {
     for p in &mut model.particles {
         let animation = &mut p.animation;
-        // let current_time = app.duration.since_prev_update.as_millis();
         let current_time = app.duration.since_start.as_millis();
-        println!("current time {}", current_time);
-        if let Some(progress) = match animation {
-            EnvelopeStage::AttackAnimation(a) => Some(a.update(current_time)),
-            EnvelopeStage::ReleaseAnimation(a) => Some(a.update(current_time)),
-            EnvelopeStage::Idle() => None,
-        } {
-            println!("updating {:?} with progress {}", p, progress);
-            p.brightness = if progress > 1. { 1. } else { progress };
+
+        match animation {
+            EnvelopeStage::Active(a) => {
+                let progress = a.update(current_time);
+                let (from, to) = a.from_to();
+
+                if progress > 1.0 {
+                    p.brightness = to;
+                    match a {
+                        Attack => {
+                            println!("end attack => Release");
+                            p.animation = EnvelopeStage::Active(Box::new(Release {
+                                start_time: current_time,
+                                duration: 5000,
+                            }));
+                        }
+                        Release => {
+                            println!("end release => Idle");
+                            p.animation = EnvelopeStage::Idle();
+                        }
+                    }
+                } else {
+                    p.brightness = map_range(progress, 0., 1., from, to);
+                }
+            }
+            EnvelopeStage::Idle() => {}
         }
+
+        // if let Some(progress) = match animation {
+        //     EnvelopeStage::AttackAnimation(a) => Some(a.update(current_time)),
+        //     EnvelopeStage::ReleaseAnimation(a) => Some(a.update(current_time)),
+        //     EnvelopeStage::Idle() => None,
+        // } {
+        //     // println!("updating {:?} with progress {}", p, progress);
+        //     // p.brightness = if progress > 1. { 1. } else { progress };
+        //     if progress > 1.0 {
+        //         p.brightness = 1.0;
+        //         p.animation = EnvelopeStage::Idle();
+        //     } else {
+        //         p.brightness = progress;
+        //     }
+        // }
     }
 }
 
