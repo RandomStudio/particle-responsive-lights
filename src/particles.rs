@@ -22,8 +22,8 @@ pub fn build_layout(count: usize, start_position: Point2, gap: f32) -> Vec<Parti
     let mut particles: Vec<Particle> = vec![];
     for i in 0..count {
         particles.push(Particle::new(Point2::new(
-            start_position.x + i.to_f32().unwrap() * gap,
-            0.,
+            start_position.x + gap / 2. + i.to_f32().unwrap() * gap,
+            i.to_f32().unwrap().sin() * gap,
         )))
     }
     particles
