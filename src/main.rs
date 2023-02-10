@@ -1,4 +1,5 @@
 use nannou::prelude::*;
+use nannou_egui::{self, egui, Egui};
 
 const THICKNESS: f32 = 10.;
 const LENGTH: f32 = 200.;
@@ -99,11 +100,18 @@ fn main() {
     nannou::app(model).update(update).run();
 }
 
+struct Settings {
+    chimeThickness: f32,
+    chimeLength: f32,
+}
 struct Model {
-    _window: window::Id,
     particles: Vec<Particle>,
     mouse_position: Point2,
+    egui: Egui,
+    settings: Settings,
 }
+
+// ---------------- Event Handlers
 
 fn mouse_pressed(app: &App, model: &mut Model, _button: MouseButton) {
     println!("mouse pressed at position {}", model.mouse_position);
@@ -125,16 +133,24 @@ fn mouse_moved(_app: &App, model: &mut Model, pos: Point2) {
     model.mouse_position = pos;
 }
 
+fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event::WindowEvent) {
+    // Let egui handle things like keyboard and mouse input.
+    model.egui.handle_raw_event(event);
+}
+
 fn model(app: &App) -> Model {
-    let _window = app
+    let window_id = app
         .new_window()
         .view(view)
         .mouse_pressed(mouse_pressed)
         .mouse_moved(mouse_moved)
+        .raw_event(raw_window_event)
         .build()
         .unwrap();
+
+    let window = app.window(window_id).unwrap();
+    let egui = Egui::from_window(&window);
     Model {
-        _window,
         mouse_position: Point2::new(0., 0.),
         particles: vec![
             Particle {
@@ -158,10 +174,29 @@ fn model(app: &App) -> Model {
                 animation: EnvelopeStage::Idle(),
             },
         ],
+        settings: Settings {
+            chimeThickness: THICKNESS,
+            chimeLength: LENGTH,
+        },
+        egui,
     }
 }
 
-fn update(app: &App, model: &mut Model, _update: Update) {
+fn update(app: &App, model: &mut Model, update: Update) {
+    let egui = &mut model.egui;
+    let settings = &mut model.settings;
+
+    egui.set_elapsed_time(update.since_start);
+    let ctx = egui.begin_frame();
+
+    egui::Window::new("Settings").show(&ctx, |ui| {
+        ui.label("Chimes thickness:");
+        ui.add(egui::Slider::new(&mut settings.chimeThickness, 1. ..=200.));
+
+        ui.label("Chimes length:");
+        ui.add(egui::Slider::new(&mut settings.chimeLength, 10. ..=2000.));
+    });
+
     for p in &mut model.particles {
         let animation = &mut p.animation;
         let current_time = app.duration.since_start.as_millis();
@@ -200,10 +235,11 @@ fn view(app: &App, model: &Model, frame: Frame) {
         draw
             // .ellipse()
             .rect()
-            .w_h(THICKNESS, LENGTH)
+            .w_h(model.settings.chimeThickness, model.settings.chimeLength)
             .x_y(p.position.x, p.position.y)
             .color(gray(p.brightness));
     }
 
     draw.to_frame(app, &frame).unwrap();
+    model.egui.draw_to_frame(&frame).unwrap();
 }
