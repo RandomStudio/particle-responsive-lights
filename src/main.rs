@@ -54,7 +54,9 @@ impl Animated for Release {
 
 // The animation concept is based on https://en.wikipedia.org/wiki/Envelope_(music)
 enum EnvelopeStage {
-    Active(Box<dyn Animated>),
+    // Active(Box<dyn Animated>),
+    AttackAnimation(Attack),
+    ReleaseAnimation(Release),
     Idle(),
 }
 
@@ -88,10 +90,10 @@ fn model(app: &App) -> Model {
             Particle {
                 position: Vec2::new(-100., 50.),
                 brightness: 0.,
-                animation: EnvelopeStage::Active(Box::new(Attack {
+                animation: EnvelopeStage::AttackAnimation(Attack {
                     start_time: app.duration.since_prev_update.as_millis(),
                     duration: 2000,
-                })),
+                }),
             },
         ],
     }
@@ -102,47 +104,61 @@ fn update(app: &App, model: &mut Model, _update: Update) {
         let animation = &mut p.animation;
         let current_time = app.duration.since_start.as_millis();
 
-        match animation {
-            EnvelopeStage::Active(a) => {
-                let progress = a.update(current_time);
-                let (from, to) = a.from_to();
+        // match animation {
+        //     EnvelopeStage::Active(a) => {
+        //         let progress = a.update(current_time);
+        //         let (from, to) = a.from_to();
 
-                if progress > 1.0 {
-                    p.brightness = to;
-                    match a {
-                        Attack => {
-                            println!("end attack => Release");
-                            p.animation = EnvelopeStage::Active(Box::new(Release {
-                                start_time: current_time,
-                                duration: 5000,
-                            }));
-                        }
-                        Release => {
-                            println!("end release => Idle");
-                            p.animation = EnvelopeStage::Idle();
-                        }
-                    }
-                } else {
+        //         if progress > 1.0 {
+        //             p.brightness = to;
+        //             match a {
+        //                 Attack => {
+        //                     println!("end attack => Release");
+        //                     p.animation = EnvelopeStage::Active(Box::new(Release {
+        //                         start_time: current_time,
+        //                         duration: 5000,
+        //                     }));
+        //                 }
+        //                 Release => {
+        //                     println!("end release => Idle");
+        //                     p.animation = EnvelopeStage::Idle();
+        //                 }
+        //             }
+        //         } else {
+        //             p.brightness = map_range(progress, 0., 1., from, to);
+        //         }
+        //     }
+        //     EnvelopeStage::Idle() => {}
+        // }
+
+        match animation {
+            EnvelopeStage::AttackAnimation(a) => {
+                let (from, to) = a.from_to();
+                let progress = a.update(current_time);
+                if progress < 1. {
                     p.brightness = map_range(progress, 0., 1., from, to);
+                } else {
+                    println!("end Attack => Release");
+                    p.brightness = to;
+                    p.animation = EnvelopeStage::ReleaseAnimation(Release {
+                        start_time: current_time,
+                        duration: 5000,
+                    })
+                }
+            }
+            EnvelopeStage::ReleaseAnimation(a) => {
+                let (from, to) = a.from_to();
+                let progress = a.update(current_time);
+                if progress < 1. {
+                    p.brightness = map_range(progress, 0., 1., from, to);
+                } else {
+                    println!("end Release => Idle");
+                    p.brightness = to;
+                    p.animation = EnvelopeStage::Idle()
                 }
             }
             EnvelopeStage::Idle() => {}
         }
-
-        // if let Some(progress) = match animation {
-        //     EnvelopeStage::AttackAnimation(a) => Some(a.update(current_time)),
-        //     EnvelopeStage::ReleaseAnimation(a) => Some(a.update(current_time)),
-        //     EnvelopeStage::Idle() => None,
-        // } {
-        //     // println!("updating {:?} with progress {}", p, progress);
-        //     // p.brightness = if progress > 1. { 1. } else { progress };
-        //     if progress > 1.0 {
-        //         p.brightness = 1.0;
-        //         p.animation = EnvelopeStage::Idle();
-        //     } else {
-        //         p.brightness = progress;
-        //     }
-        // }
     }
 }
 
