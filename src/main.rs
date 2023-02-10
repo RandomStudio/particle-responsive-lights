@@ -1,6 +1,6 @@
 use nannou::prelude::*;
 
-pub trait Animated {
+pub trait Animation {
     fn duration(&self) -> u128;
     fn start_time(&self) -> u128;
     fn from_to(&self) -> (f32, f32);
@@ -10,6 +10,17 @@ pub trait Animated {
         let elapsed = current_time - self.start_time();
         let progress = elapsed.to_f64().unwrap() / self.duration().to_f64().unwrap();
         progress.to_f32().unwrap()
+    }
+
+    fn get_brightness_and_done(&self, current_time: u128) -> (f32, bool) {
+        let (from, to) = self.from_to();
+        let progress = self.update(current_time);
+        let brightness = map_range(progress, 0., 1., from, to);
+        if progress > 1. {
+            (to, true)
+        } else {
+            (brightness, false)
+        }
     }
 }
 
@@ -24,7 +35,7 @@ struct Attack {
     duration: u128,
 }
 
-impl Animated for Attack {
+impl Animation for Attack {
     fn start_time(&self) -> u128 {
         self.start_time
     }
@@ -40,7 +51,7 @@ struct Release {
     duration: u128,
 }
 
-impl Animated for Release {
+impl Animation for Release {
     fn start_time(&self) -> u128 {
         self.start_time
     }
@@ -104,42 +115,12 @@ fn update(app: &App, model: &mut Model, _update: Update) {
         let animation = &mut p.animation;
         let current_time = app.duration.since_start.as_millis();
 
-        // match animation {
-        //     EnvelopeStage::Active(a) => {
-        //         let progress = a.update(current_time);
-        //         let (from, to) = a.from_to();
-
-        //         if progress > 1.0 {
-        //             p.brightness = to;
-        //             match a {
-        //                 Attack => {
-        //                     println!("end attack => Release");
-        //                     p.animation = EnvelopeStage::Active(Box::new(Release {
-        //                         start_time: current_time,
-        //                         duration: 5000,
-        //                     }));
-        //                 }
-        //                 Release => {
-        //                     println!("end release => Idle");
-        //                     p.animation = EnvelopeStage::Idle();
-        //                 }
-        //             }
-        //         } else {
-        //             p.brightness = map_range(progress, 0., 1., from, to);
-        //         }
-        //     }
-        //     EnvelopeStage::Idle() => {}
-        // }
-
         match animation {
             EnvelopeStage::AttackAnimation(a) => {
-                let (from, to) = a.from_to();
-                let progress = a.update(current_time);
-                if progress < 1. {
-                    p.brightness = map_range(progress, 0., 1., from, to);
-                } else {
+                let (brightness, done) = a.get_brightness_and_done(current_time);
+                p.brightness = brightness;
+                if done {
                     println!("end Attack => Release");
-                    p.brightness = to;
                     p.animation = EnvelopeStage::ReleaseAnimation(Release {
                         start_time: current_time,
                         duration: 5000,
@@ -147,13 +128,10 @@ fn update(app: &App, model: &mut Model, _update: Update) {
                 }
             }
             EnvelopeStage::ReleaseAnimation(a) => {
-                let (from, to) = a.from_to();
-                let progress = a.update(current_time);
-                if progress < 1. {
-                    p.brightness = map_range(progress, 0., 1., from, to);
-                } else {
+                let (brightness, done) = a.get_brightness_and_done(current_time);
+                p.brightness = brightness;
+                if done {
                     println!("end Release => Idle");
-                    p.brightness = to;
                     p.animation = EnvelopeStage::Idle()
                 }
             }
