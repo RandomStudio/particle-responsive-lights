@@ -3,12 +3,12 @@ use nannou_egui::{self, egui, Egui};
 
 const THICKNESS: f32 = 10.;
 const LENGTH: f32 = 200.;
-const ATTACK_DURATION: u128 = 125;
-const RELEASE_DURATION: u128 = 2500;
+const ATTACK_DURATION: u16 = 125;
+const RELEASE_DURATION: u16 = 2500;
 
 pub trait Animation {
-    fn new(duration: u128, start_brightness: f32, start_time: u128) -> Self;
-    fn duration(&self) -> u128;
+    fn new(duration: u16, start_brightness: f32, start_time: u128) -> Self;
+    fn duration(&self) -> u16;
     fn start_time(&self) -> u128;
 
     fn get_range(&self) -> (f32, f32);
@@ -40,12 +40,12 @@ struct Particle {
 
 struct Attack {
     start_time: u128,
-    duration: u128,
+    duration: u16,
     range: (f32, f32),
 }
 
 impl Animation for Attack {
-    fn new(duration: u128, start_brightness: f32, start_time: u128) -> Self {
+    fn new(duration: u16, start_brightness: f32, start_time: u128) -> Self {
         Attack {
             start_time,
             duration,
@@ -56,7 +56,7 @@ impl Animation for Attack {
     fn start_time(&self) -> u128 {
         self.start_time
     }
-    fn duration(&self) -> u128 {
+    fn duration(&self) -> u16 {
         self.duration
     }
     fn get_range(&self) -> (f32, f32) {
@@ -65,12 +65,12 @@ impl Animation for Attack {
 }
 struct Release {
     start_time: u128,
-    duration: u128,
+    duration: u16,
     range: (f32, f32),
 }
 
 impl Animation for Release {
-    fn new(duration: u128, start_brightness: f32, start_time: u128) -> Self {
+    fn new(duration: u16, start_brightness: f32, start_time: u128) -> Self {
         Release {
             start_time,
             duration,
@@ -80,7 +80,7 @@ impl Animation for Release {
     fn start_time(&self) -> u128 {
         self.start_time
     }
-    fn duration(&self) -> u128 {
+    fn duration(&self) -> u16 {
         self.duration
     }
     fn get_range(&self) -> (f32, f32) {
@@ -101,8 +101,10 @@ fn main() {
 }
 
 struct Settings {
-    chimeThickness: f32,
-    chimeLength: f32,
+    chime_thickness: f32,
+    chime_length: f32,
+    attack_duration: u16,
+    release_duration: u16,
 }
 struct Model {
     particles: Vec<Particle>,
@@ -122,7 +124,7 @@ fn mouse_pressed(app: &App, model: &mut Model, _button: MouseButton) {
     }) {
         println!("clicked on particle!");
         close_particle.animation = EnvelopeStage::AttackAnimation(Attack::new(
-            ATTACK_DURATION,
+            model.settings.attack_duration,
             close_particle.brightness,
             app.duration.since_start.as_millis(),
         ))
@@ -137,6 +139,8 @@ fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event:
     // Let egui handle things like keyboard and mouse input.
     model.egui.handle_raw_event(event);
 }
+
+// ---------------- Set up Model with defaults
 
 fn model(app: &App) -> Model {
     let window_id = app
@@ -175,12 +179,16 @@ fn model(app: &App) -> Model {
             },
         ],
         settings: Settings {
-            chimeThickness: THICKNESS,
-            chimeLength: LENGTH,
+            chime_thickness: THICKNESS,
+            chime_length: LENGTH,
+            attack_duration: ATTACK_DURATION,
+            release_duration: RELEASE_DURATION,
         },
         egui,
     }
 }
+
+// ---------------- Update before drawing ever frame
 
 fn update(app: &App, model: &mut Model, update: Update) {
     let egui = &mut model.egui;
@@ -191,10 +199,18 @@ fn update(app: &App, model: &mut Model, update: Update) {
 
     egui::Window::new("Settings").show(&ctx, |ui| {
         ui.label("Chimes thickness:");
-        ui.add(egui::Slider::new(&mut settings.chimeThickness, 1. ..=200.));
+        ui.add(egui::Slider::new(&mut settings.chime_thickness, 1. ..=200.));
 
         ui.label("Chimes length:");
-        ui.add(egui::Slider::new(&mut settings.chimeLength, 10. ..=2000.));
+        ui.add(egui::Slider::new(&mut settings.chime_length, 10. ..=2000.));
+
+        ui.separator();
+
+        ui.label("Attack duration:");
+        ui.add(egui::Slider::new(&mut settings.attack_duration, 1..=2000));
+
+        ui.label("Release duration:");
+        ui.add(egui::Slider::new(&mut settings.release_duration, 1..=15000));
     });
 
     for p in &mut model.particles {
@@ -208,7 +224,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                 if done {
                     println!("end Attack => Release");
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
-                        RELEASE_DURATION,
+                        model.settings.release_duration,
                         p.brightness,
                         current_time,
                     ))
@@ -235,7 +251,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
         draw
             // .ellipse()
             .rect()
-            .w_h(model.settings.chimeThickness, model.settings.chimeLength)
+            .w_h(model.settings.chime_thickness, model.settings.chime_length)
             .x_y(p.position.x, p.position.y)
             .color(gray(p.brightness));
     }
