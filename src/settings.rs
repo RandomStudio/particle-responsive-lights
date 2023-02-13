@@ -1,16 +1,30 @@
 use std::time::Duration;
 
-use nannou::prelude::Rect;
+use nannou::prelude::*;
 use nannou_egui::egui::{self, ComboBox};
+use nannou_egui::Egui;
 use tween::*;
 
-use crate::DEFAULT_WIDTH_RATIO;
-use crate::{particles::build_layout, Model};
+use crate::particles::build_layout;
+use crate::particles::Particle;
 
 use std::string::ToString;
 use strum::IntoEnumIterator;
 use strum_macros::Display;
 use strum_macros::EnumIter;
+
+pub const DEFAULT_WINDOW_W: u32 = 1920;
+pub const DEFAULT_WINDOW_H: u32 = 720;
+
+const DEFAULT_COUNT: usize = 14;
+const DEFAULT_THICKNESS: f32 = 15.;
+const DEFAULT_LENGTH: f32 = 250.;
+const DEFAULT_ATTACK_DURATION: usize = 300;
+const DEFAULT_RELEASE_DURATION: usize = 2500;
+const DEFAULT_SHOW_B_INDICATOR: bool = true;
+
+pub const DEFAULT_WIDTH_RATIO: f32 = 0.6;
+pub const DEFAULT_HEIGHT_RATIO: f32 = 0.2;
 
 pub struct PhaseSettings {
     pub duration: usize,
@@ -29,6 +43,46 @@ pub struct Settings {
     pub attack_settings: PhaseSettings,
     pub release_settings: PhaseSettings,
     pub transmission_settings: TransmissionSettings,
+}
+
+pub struct Model {
+    pub window_id: WindowId,
+    pub particles: Vec<Particle>,
+    pub mouse_position: Point2,
+    pub egui: Egui,
+    pub settings: Settings,
+}
+
+impl Model {
+    pub fn defaults(window_id: WindowId, egui: Egui) -> Self {
+        Model {
+            window_id,
+            particles: build_layout(
+                DEFAULT_COUNT,
+                DEFAULT_WINDOW_W.to_f32() * DEFAULT_WIDTH_RATIO,
+                DEFAULT_WINDOW_H.to_f32() * DEFAULT_HEIGHT_RATIO,
+            ),
+            mouse_position: Point2::new(0., 0.),
+            settings: Settings {
+                chimes_count: DEFAULT_COUNT,
+                chime_thickness: DEFAULT_THICKNESS,
+                chime_length: DEFAULT_LENGTH,
+                attack_settings: PhaseSettings {
+                    duration: DEFAULT_ATTACK_DURATION,
+                    style: EaseStyle::SineBoth,
+                },
+                release_settings: PhaseSettings {
+                    duration: DEFAULT_RELEASE_DURATION,
+                    style: EaseStyle::BounceIn,
+                },
+                transmission_settings: TransmissionSettings {
+                    max_range: DEFAULT_WINDOW_W.to_f32() * 0.2,
+                },
+                show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
+            },
+            egui,
+        }
+    }
 }
 
 // TODO: seems tedious to have to re-write all these enums
@@ -102,6 +156,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             chime_length,
             attack_settings,
             release_settings,
+            transmission_settings,
             ..
         } = &mut model.settings;
 
@@ -162,5 +217,12 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
                     ui.selectable_value(style, named_style, n);
                 }
             });
+
+        ui.separator();
+
+        let TransmissionSettings { max_range } = transmission_settings;
+
+        ui.label("Transmission range");
+        ui.add(egui::Slider::new(max_range, 0. ..=1000.))
     });
 }

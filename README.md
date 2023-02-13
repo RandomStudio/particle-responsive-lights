@@ -3,7 +3,9 @@
 Each chime is a "particle" in this system.
 
 ## TODO
-- [ ] Implement "transmission" effects
+- [x] Implement "transmission" effects
+- [ ] Implement transmission with delay
+- [ ] Display FPS
 - [ ] Output ArtNet
 - [ ] Load/save settings
 - [ ] Load custom, specific arrangement of chimes

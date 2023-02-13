@@ -1,19 +1,7 @@
 use nannou::prelude::*;
 use nannou_egui::Egui;
-use settings::TransmissionSettings;
-use settings::{build_ui, EaseStyle, PhaseSettings, Settings};
-use tween::TweenTime;
-
-const DEFAULT_WINDOW_W: u32 = 1920;
-const DEFAULT_WINDOW_H: u32 = 720;
-
-const DEFAULT_COUNT: usize = 7;
-const DEFAULT_THICKNESS: f32 = 10.;
-const DEFAULT_LENGTH: f32 = 200.;
-const DEFAULT_ATTACK_DURATION: usize = 300;
-const DEFAULT_RELEASE_DURATION: usize = 2500;
-const DEFAULT_SHOW_B_INDICATOR: bool = true;
-pub const DEFAULT_WIDTH_RATIO: f32 = 0.6;
+use settings::{build_ui, EaseStyle, PhaseSettings, DEFAULT_WINDOW_H, DEFAULT_WINDOW_W};
+use settings::{Model, TransmissionSettings};
 
 mod animation;
 use crate::animation::*;
@@ -28,14 +16,6 @@ fn main() {
     nannou::app(model).update(update).run();
 }
 
-pub struct Model {
-    window_id: WindowId,
-    particles: Vec<Particle>,
-    mouse_position: Point2,
-    egui: Egui,
-    settings: Settings,
-}
-
 // ---------------- Event Handlers
 
 fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
@@ -44,8 +24,10 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
     let TransmissionSettings { max_range } = &model.settings.transmission_settings;
 
     if let Some(target_particle) = model.particles.iter().find(|p| {
-        let distance = p.position.distance(model.mouse_position);
-        distance <= DEFAULT_LENGTH / 2.
+        let tolerance = &model.settings.chime_thickness * 2.;
+        let left = p.position.x - tolerance;
+        let right = p.position.x + tolerance;
+        model.mouse_position.x >= left && model.mouse_position.x <= right
     }) {
         let id = target_particle.id;
         let position = target_particle.position;
@@ -120,33 +102,7 @@ fn model(app: &App) -> Model {
     let window = app.window(window_id).unwrap();
     let egui = Egui::from_window(&window);
 
-    Model {
-        window_id,
-        mouse_position: Point2::new(0., 0.),
-        particles: build_layout(
-            DEFAULT_COUNT,
-            window.rect().w() * DEFAULT_WIDTH_RATIO,
-            window.rect().h() * 0.2,
-        ),
-        settings: Settings {
-            chimes_count: DEFAULT_COUNT,
-            chime_thickness: DEFAULT_THICKNESS,
-            chime_length: DEFAULT_LENGTH,
-            attack_settings: PhaseSettings {
-                duration: DEFAULT_ATTACK_DURATION,
-                style: EaseStyle::SineBoth,
-            },
-            release_settings: PhaseSettings {
-                duration: DEFAULT_RELEASE_DURATION,
-                style: EaseStyle::BounceIn,
-            },
-            transmission_settings: TransmissionSettings {
-                max_range: DEFAULT_WINDOW_W.to_f32() * 0.3,
-            },
-            show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
-        },
-        egui,
-    }
+    Model::defaults(window_id, egui)
 }
 
 // ---------------- Update before drawing every frame
