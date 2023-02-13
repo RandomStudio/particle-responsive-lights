@@ -1,11 +1,13 @@
 use nannou::prelude::*;
 use nannou_egui::{self, egui, Egui};
+use tween::Tweener;
 
-const COUNT: usize = 7;
-const THICKNESS: f32 = 10.;
-const LENGTH: f32 = 200.;
-const ATTACK_DURATION: u16 = 125;
-const RELEASE_DURATION: u16 = 2500;
+const DEFAULT_COUNT: usize = 7;
+const DEFAULT_THICKNESS: f32 = 10.;
+const DEFAULT_LENGTH: f32 = 200.;
+const DEFAULT_ATTACK_DURATION: usize = 125;
+const DEFAULT_RELEASE_DURATION: usize = 2500;
+const DEFAULT_SHOW_B_INDICATOR: bool = true;
 
 mod animation;
 use crate::animation::*;
@@ -19,10 +21,11 @@ fn main() {
 
 struct Settings {
     chimes_count: usize,
+    show_brightness_indicator: bool,
     chime_thickness: f32,
     chime_length: f32,
-    attack_duration: u16,
-    release_duration: u16,
+    attack_duration: usize,
+    release_duration: usize,
 }
 struct Model {
     window_id: WindowId,
@@ -34,18 +37,17 @@ struct Model {
 
 // ---------------- Event Handlers
 
-fn mouse_pressed(app: &App, model: &mut Model, _button: MouseButton) {
+fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
     println!("mouse pressed at position {}", model.mouse_position);
     if let Some(close_particle) = model.particles.iter_mut().find(|p| {
         let distance = p.position.distance(model.mouse_position);
         // println!("distance: {}", distance);
-        distance <= LENGTH / 2.
+        distance <= DEFAULT_LENGTH / 2.
     }) {
         println!("clicked on particle!");
         close_particle.animation = EnvelopeStage::AttackAnimation(Attack::new(
             model.settings.attack_duration,
             close_particle.brightness,
-            app.duration.since_start.as_millis(),
         ))
     }
 }
@@ -77,13 +79,18 @@ fn model(app: &App) -> Model {
     Model {
         window_id,
         mouse_position: Point2::new(0., 0.),
-        particles: build_layout(COUNT, window.rect().w() * 0.8, window.rect().h() * 0.2),
+        particles: build_layout(
+            DEFAULT_COUNT,
+            window.rect().w() * 0.8,
+            window.rect().h() * 0.2,
+        ),
         settings: Settings {
-            chimes_count: COUNT,
-            chime_thickness: THICKNESS,
-            chime_length: LENGTH,
-            attack_duration: ATTACK_DURATION,
-            release_duration: RELEASE_DURATION,
+            chimes_count: DEFAULT_COUNT,
+            chime_thickness: DEFAULT_THICKNESS,
+            chime_length: DEFAULT_LENGTH,
+            attack_duration: DEFAULT_ATTACK_DURATION,
+            release_duration: DEFAULT_RELEASE_DURATION,
+            show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
         },
         egui,
     }
@@ -114,18 +121,12 @@ fn update(app: &App, model: &mut Model, update: Update) {
             )
         }
 
-        // TODO: below cannot work because of ownership
-        // let window = app.window(model.window_id).unwrap();
-        // if response.changed() {
-        //     println!("chimes count change to {}", model.settings.chimes_count);
-        //     // model.particles = build_layout(
-        //     //     model.settings.chimes_count,
-        //     //     Point2::new(window.rect().left(), 0.),
-        //     //     window.rect().w() / COUNT.to_f32().unwrap(),
-        //     // )
-        // }
-
         ui.separator();
+
+        ui.checkbox(
+            &mut settings.show_brightness_indicator,
+            "Brightness indicator",
+        );
 
         ui.label("Chimes thickness:");
         ui.add(egui::Slider::new(&mut settings.chime_thickness, 1. ..=200.));
@@ -144,23 +145,28 @@ fn update(app: &App, model: &mut Model, update: Update) {
 
     for p in &mut model.particles {
         let animation = &mut p.animation;
-        let current_time = app.duration.since_start.as_millis();
+        // let current_time = app.duration.since_start.as_millis();
+        let delta_time = app
+            .duration
+            .since_prev_update
+            .as_millis()
+            .to_usize()
+            .unwrap();
 
         match animation {
             EnvelopeStage::AttackAnimation(a) => {
-                let (brightness, done) = a.get_brightness_and_done(current_time);
+                let (brightness, done) = a.get_brightness_and_done(delta_time);
                 p.brightness = brightness;
                 if done {
                     println!("end Attack => Release");
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
                         model.settings.release_duration,
                         p.brightness,
-                        current_time,
                     ))
                 }
             }
             EnvelopeStage::ReleaseAnimation(a) => {
-                let (brightness, done) = a.get_brightness_and_done(current_time);
+                let (brightness, done) = a.get_brightness_and_done(delta_time);
                 p.brightness = brightness;
                 if done {
                     println!("end Release => Idle");
@@ -183,6 +189,17 @@ fn view(app: &App, model: &Model, frame: Frame) {
             .w_h(model.settings.chime_thickness, model.settings.chime_length)
             .x_y(p.position.x, p.position.y)
             .color(gray(p.brightness));
+
+        if model.settings.show_brightness_indicator {
+            let size = model.settings.chime_length / 2.;
+            draw.rect()
+                .w_h(model.settings.chime_thickness * 1.25, 2.)
+                .x_y(
+                    p.position.x,
+                    p.position.y + map_range(p.brightness, 0., 1., size, -size),
+                )
+                .color(WHITE);
+        }
     }
 
     draw.to_frame(app, &frame).unwrap();
