@@ -28,7 +28,7 @@ pub struct Settings {
 // TODO: seems tedious to have to re-write all these enums
 // but Box<dyn Tween<f32>> is difficult to impl PartialEQ for
 // so UI / ComboBox is difficult
-#[derive(PartialEq, Debug, EnumIter, Display, Clone)]
+#[derive(PartialEq, Debug, EnumIter, Display)]
 pub enum EaseStyle {
     Linear,
     BounceIn,
@@ -88,13 +88,22 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
     let ctx = egui.begin_frame();
 
     egui::Window::new("Settings").show(&ctx, |ui| {
-        let settings = &mut model.settings;
+        // let settings = &mut model.settings;
+        let Settings {
+            chimes_count,
+            show_brightness_indicator,
+            chime_thickness,
+            chime_length,
+            attack_settings,
+            release_settings,
+            ..
+        } = &mut model.settings;
 
         ui.set_min_height(600.);
 
         ui.label("Chimes count:");
-        ui.add(egui::Slider::new(&mut settings.chimes_count, 1..=30));
-        let current_count = settings.chimes_count.to_owned();
+        ui.add(egui::Slider::new(chimes_count, 1..=30));
+        let current_count = chimes_count.to_owned();
         if ui.button("update").clicked() {
             model.particles =
                 build_layout(current_count, window_rect.w() * 0.8, window_rect.h() * 0.2)
@@ -102,63 +111,46 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
         ui.separator();
 
-        ui.checkbox(
-            &mut settings.show_brightness_indicator,
-            "Brightness indicator",
-        );
+        ui.checkbox(show_brightness_indicator, "Brightness indicator");
 
         ui.label("Chimes thickness:");
-        ui.add(egui::Slider::new(&mut settings.chime_thickness, 1. ..=200.));
+        ui.add(egui::Slider::new(chime_thickness, 1. ..=200.));
 
         ui.label("Chimes length:");
-        ui.add(egui::Slider::new(&mut settings.chime_length, 10. ..=2000.));
+        ui.add(egui::Slider::new(chime_length, 10. ..=2000.));
 
         ui.separator();
+
+        let PhaseSettings { duration, style } = attack_settings;
 
         ui.label("Attack duration:");
-        ui.add(egui::Slider::new(
-            &mut settings.attack_settings.duration,
-            1..=10000,
-        ));
-        ui.add(egui::DragValue::new(&mut settings.attack_settings.duration).clamp_range(1..=10000));
-
-        ui.label("Release duration:");
-
-        ui.add(egui::Slider::new(
-            &mut settings.release_settings.duration,
-            1..=10000,
-        ));
-        ui.add(
-            egui::DragValue::new(&mut settings.release_settings.duration).clamp_range(1..=10000),
-        );
-
-        ui.separator();
+        ui.add(egui::Slider::new(duration, 1..=10000));
+        ui.add(egui::DragValue::new(duration).clamp_range(1..=10000));
 
         ComboBox::from_label("Attack-phase Tween")
-            .selected_text(format!("{:?}", model.settings.attack_settings.style))
+            .selected_text(style.to_string())
             .show_ui(ui, |ui| {
-                let styles = EaseStyle::iter().map(|s| ((s.clone(), s.to_string())));
-
-                for (style, name) in styles {
-                    ui.selectable_value(
-                        &mut model.settings.release_settings.style,
-                        style,
-                        format!("{}", name),
-                    );
+                for named_style in EaseStyle::iter() {
+                    let n = named_style.to_string();
+                    ui.selectable_value(style, named_style, n);
                 }
             });
 
-        ComboBox::from_label("Release-phase Tween")
-            .selected_text(format!("{:?}", model.settings.release_settings.style))
-            .show_ui(ui, |ui| {
-                let styles = EaseStyle::iter().map(|s| ((s.clone(), s.to_string())));
+        let PhaseSettings { duration, style } = release_settings;
 
-                for (style, name) in styles {
-                    ui.selectable_value(
-                        &mut model.settings.release_settings.style,
-                        style,
-                        format!("{}", name),
-                    );
+        ui.separator();
+
+        ui.label("Release duration:");
+
+        ui.add(egui::Slider::new(duration, 1..=10000));
+        ui.add(egui::DragValue::new(duration).clamp_range(1..=10000));
+
+        ComboBox::from_label("Release-phase Tween")
+            .selected_text(style.to_string())
+            .show_ui(ui, |ui| {
+                for named_style in EaseStyle::iter() {
+                    let n = named_style.to_string();
+                    ui.selectable_value(style, named_style, n);
                 }
             });
     });
