@@ -4,6 +4,7 @@ Each chime is a "particle" in this system.
 
 ## TODO
 - [ ] Implement "transmission" effects
+- [ ] Output ArtNet
 - [ ] Load/save settings
 - [ ] Load custom, specific arrangement of chimes
 - [ ] Plot selected ease curves on GUI

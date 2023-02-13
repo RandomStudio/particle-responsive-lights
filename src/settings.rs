@@ -17,6 +17,10 @@ pub struct PhaseSettings {
     pub style: EaseStyle,
 }
 
+pub struct TransmissionSettings {
+    pub max_range: f32,
+}
+
 pub struct Settings {
     pub chimes_count: usize,
     pub show_brightness_indicator: bool,
@@ -24,6 +28,7 @@ pub struct Settings {
     pub chime_length: f32,
     pub attack_settings: PhaseSettings,
     pub release_settings: PhaseSettings,
+    pub transmission_settings: TransmissionSettings,
 }
 
 // TODO: seems tedious to have to re-write all these enums

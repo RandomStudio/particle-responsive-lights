@@ -1,6 +1,11 @@
 use nannou::prelude::*;
 use nannou_egui::Egui;
+use settings::TransmissionSettings;
 use settings::{build_ui, EaseStyle, PhaseSettings, Settings};
+use tween::TweenTime;
+
+const DEFAULT_WINDOW_W: u32 = 1920;
+const DEFAULT_WINDOW_H: u32 = 720;
 
 const DEFAULT_COUNT: usize = 7;
 const DEFAULT_THICKNESS: f32 = 10.;
@@ -35,17 +40,58 @@ pub struct Model {
 
 fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
     println!("mouse pressed at position {}", model.mouse_position);
-    if let Some(close_particle) = model.particles.iter_mut().find(|p| {
+    let PhaseSettings { duration, style } = &model.settings.attack_settings;
+    let TransmissionSettings { max_range } = &model.settings.transmission_settings;
+
+    if let Some(target_particle) = model.particles.iter().find(|p| {
         let distance = p.position.distance(model.mouse_position);
-        // println!("distance: {}", distance);
         distance <= DEFAULT_LENGTH / 2.
     }) {
-        println!("clicked on particle!");
-        close_particle.animation = EnvelopeStage::AttackAnimation(Attack::new(
-            model.settings.attack_settings.duration,
-            close_particle.brightness,
-            get_tween(&model.settings.attack_settings.style),
-        ))
+        let id = target_particle.id;
+        let position = target_particle.position;
+        for p in model.particles.iter_mut() {
+            if p.id == id {
+                activate_single(p, *duration, style, p.brightness, 1.0);
+            } else {
+                let distance = position.distance(p.position);
+                if distance <= *max_range {
+                    if let Some(new_brightness_target) =
+                        possibly_activate_by_transmission(p, distance, *max_range)
+                    {
+                        activate_single(p, *duration, style, p.brightness, new_brightness_target)
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn activate_single(
+    p: &mut Particle,
+    duration: usize,
+    ease_style: &EaseStyle,
+    start_brightness: f32,
+    target_brightness: f32,
+) {
+    p.animation = EnvelopeStage::AttackAnimation(Attack::new(
+        duration,
+        start_brightness,
+        target_brightness,
+        get_tween(&ease_style),
+    ))
+}
+
+fn possibly_activate_by_transmission(
+    p: &mut Particle,
+    distance: f32,
+    max_range: f32,
+) -> Option<f32> {
+    let current_brightness = p.brightness;
+    let target_brightness = map_range(distance, 0., max_range, 1., 0.0);
+    if target_brightness > current_brightness {
+        Some(target_brightness)
+    } else {
+        None
     }
 }
 
@@ -63,7 +109,7 @@ fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event:
 fn model(app: &App) -> Model {
     let window_id = app
         .new_window()
-        .size(1920, 720)
+        .size(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H)
         .view(view)
         .mouse_pressed(mouse_pressed)
         .mouse_moved(mouse_moved)
@@ -94,13 +140,16 @@ fn model(app: &App) -> Model {
                 duration: DEFAULT_RELEASE_DURATION,
                 style: EaseStyle::BounceIn,
             },
+            transmission_settings: TransmissionSettings {
+                max_range: DEFAULT_WINDOW_W.to_f32() * 0.3,
+            },
             show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
         },
         egui,
     }
 }
 
-// ---------------- Update before drawing ever frame
+// ---------------- Update before drawing every frame
 
 fn update(app: &App, model: &mut Model, update: Update) {
     let window = app.window(model.window_id).unwrap();
@@ -126,6 +175,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
                         model.settings.release_settings.duration,
                         p.brightness,
+                        0.,
                         get_tween(&model.settings.release_settings.style),
                     ))
                 }
@@ -142,6 +192,8 @@ fn update(app: &App, model: &mut Model, update: Update) {
         }
     }
 }
+
+// ---------------- Draw every frame
 
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();

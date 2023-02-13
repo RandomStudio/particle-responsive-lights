@@ -4,7 +4,12 @@ use tween::{Tween, Tweener};
 type StoredTweener = Tweener<f32, usize, Box<dyn Tween<f32>>>;
 
 pub trait Animation {
-    fn new(duration: usize, start_brightness: f32, tween: Box<dyn Tween<f32>>) -> Self;
+    fn new(
+        duration: usize,
+        start_brightness: f32,
+        target_brightness: f32,
+        tween: Box<dyn Tween<f32>>,
+    ) -> Self;
     fn duration(&self) -> usize;
 
     fn get_elapsed(&self) -> usize;
@@ -34,11 +39,16 @@ pub struct Attack {
 }
 
 impl Animation for Attack {
-    fn new(duration: usize, start_brightness: f32, tween: Box<dyn Tween<f32>>) -> Self {
+    fn new(
+        duration: usize,
+        start_brightness: f32,
+        target_brightness: f32,
+        tween: Box<dyn Tween<f32>>,
+    ) -> Self {
         Attack {
             elapsed: 0,
             duration,
-            tweener: Tweener::new(start_brightness, 1.0, duration, tween),
+            tweener: Tweener::new(start_brightness, target_brightness, duration, tween),
         }
     }
 
@@ -65,11 +75,16 @@ pub struct Release {
 }
 
 impl Animation for Release {
-    fn new(duration: usize, start_brightness: f32, tween: Box<dyn Tween<f32>>) -> Self {
+    fn new(
+        duration: usize,
+        start_brightness: f32,
+        target_brightness: f32,
+        tween: Box<dyn Tween<f32>>,
+    ) -> Self {
         Release {
             elapsed: 0,
             duration,
-            tweener: Tweener::new(start_brightness, 0., duration, tween),
+            tweener: Tweener::new(start_brightness, target_brightness, duration, tween),
         }
     }
     fn get_elapsed(&self) -> usize {
