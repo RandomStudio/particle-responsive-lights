@@ -1,6 +1,5 @@
 use nannou::prelude::*;
-use nannou_egui::egui::ComboBox;
-use nannou_egui::{self, egui, Egui};
+use nannou_egui::Egui;
 use settings::{build_ui, EaseStyle, PhaseSettings, Settings};
 
 const DEFAULT_COUNT: usize = 7;

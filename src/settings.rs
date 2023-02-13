@@ -6,6 +6,11 @@ use tween::*;
 
 use crate::{particles::build_layout, Model};
 
+use std::string::ToString;
+use strum::IntoEnumIterator;
+use strum_macros::Display;
+use strum_macros::EnumIter;
+
 pub struct PhaseSettings {
     pub duration: usize,
     pub style: EaseStyle,
@@ -23,7 +28,7 @@ pub struct Settings {
 // TODO: seems tedious to have to re-write all these enums
 // but Box<dyn Tween<f32>> is difficult to impl PartialEQ for
 // so UI / ComboBox is difficult
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, EnumIter, Display, Clone)]
 pub enum EaseStyle {
     Linear,
     BounceIn,
@@ -32,6 +37,9 @@ pub enum EaseStyle {
     SineIn,
     SineOut,
     SineBoth,
+    ElasticIn,
+    ElasticOut,
+    ElasticBoth,
     QuadIn,
     QuadOut,
     QuadBoth,
@@ -44,9 +52,6 @@ pub enum EaseStyle {
     CircIn,
     CircOut,
     CircBoth,
-    ElasticIn,
-    ElasticOut,
-    ElasticBoth,
 }
 
 pub fn get_tween(style: &EaseStyle) -> Box<dyn Tween<f32>> {
@@ -84,6 +89,8 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
     egui::Window::new("Settings").show(&ctx, |ui| {
         let settings = &mut model.settings;
+
+        ui.set_min_height(600.);
 
         ui.label("Chimes count:");
         ui.add(egui::Slider::new(&mut settings.chimes_count, 1..=30));
@@ -130,55 +137,29 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
         ComboBox::from_label("Attack-phase Tween")
             .selected_text(format!("{:?}", model.settings.attack_settings.style))
             .show_ui(ui, |ui| {
-                ui.style_mut().wrap = Some(false);
-                ui.set_min_width(60.0);
-                ui.selectable_value(
-                    &mut model.settings.attack_settings.style,
-                    EaseStyle::Linear,
-                    "Linear",
-                );
-                ui.selectable_value(
-                    &mut model.settings.attack_settings.style,
-                    EaseStyle::BounceIn,
-                    "BounceIn",
-                );
-                ui.selectable_value(
-                    &mut model.settings.attack_settings.style,
-                    EaseStyle::BounceOut,
-                    "BounceOut",
-                );
-                ui.selectable_value(
-                    &mut model.settings.attack_settings.style,
-                    EaseStyle::SineBoth,
-                    "SineInOut",
-                );
+                let styles = EaseStyle::iter().map(|s| ((s.clone(), s.to_string())));
+
+                for (style, name) in styles {
+                    ui.selectable_value(
+                        &mut model.settings.release_settings.style,
+                        style,
+                        format!("{}", name),
+                    );
+                }
             });
 
         ComboBox::from_label("Release-phase Tween")
             .selected_text(format!("{:?}", model.settings.release_settings.style))
             .show_ui(ui, |ui| {
-                ui.style_mut().wrap = Some(false);
-                ui.set_min_width(60.0);
-                ui.selectable_value(
-                    &mut model.settings.release_settings.style,
-                    EaseStyle::Linear,
-                    "Linear",
-                );
-                ui.selectable_value(
-                    &mut model.settings.release_settings.style,
-                    EaseStyle::BounceIn,
-                    "BounceIn",
-                );
-                ui.selectable_value(
-                    &mut model.settings.release_settings.style,
-                    EaseStyle::BounceOut,
-                    "BounceOut",
-                );
-                ui.selectable_value(
-                    &mut model.settings.release_settings.style,
-                    EaseStyle::SineBoth,
-                    "SineInOut",
-                );
+                let styles = EaseStyle::iter().map(|s| ((s.clone(), s.to_string())));
+
+                for (style, name) in styles {
+                    ui.selectable_value(
+                        &mut model.settings.release_settings.style,
+                        style,
+                        format!("{}", name),
+                    );
+                }
             });
     });
 }
