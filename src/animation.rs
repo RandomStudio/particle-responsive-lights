@@ -12,18 +12,23 @@ pub trait Animation {
     ) -> Self;
     fn duration(&self) -> usize;
 
-    fn get_elapsed(&self) -> usize;
-    fn set_elapsed(&mut self, time: usize);
+    fn get_elapsed(&self) -> i64;
+    fn set_elapsed(&mut self, time: i64);
 
     fn get_tweener(&mut self) -> &mut StoredTweener;
 
     /// Update the animation using delta time, get the progress in the range `[0,1]`
     fn update(&mut self, delta_time: usize) -> f32 {
-        let elapsed = self.get_elapsed() + delta_time;
+        let elapsed = self.get_elapsed() + delta_time.to_i64().unwrap();
         self.set_elapsed(elapsed);
-        // let progress = elapsed.to_f64().unwrap() / self.duration().to_f64().unwrap();
-        let progress = self.get_tweener().move_by(delta_time);
-        progress.to_f32().unwrap()
+
+        if elapsed >= 0 {
+            // let progress = elapsed.to_f64().unwrap() / self.duration().to_f64().unwrap();
+            let progress = self.get_tweener().move_by(delta_time);
+            progress
+        } else {
+            0.
+        }
     }
 
     fn get_brightness_and_done(&mut self, delta_time: usize) -> (f32, bool) {
@@ -33,7 +38,7 @@ pub trait Animation {
 }
 
 pub struct Attack {
-    elapsed: usize,
+    elapsed: i64,
     duration: usize,
     tweener: StoredTweener,
 }
@@ -52,11 +57,11 @@ impl Animation for Attack {
         }
     }
 
-    fn get_elapsed(&self) -> usize {
+    fn get_elapsed(&self) -> i64 {
         self.elapsed
     }
 
-    fn set_elapsed(&mut self, time: usize) {
+    fn set_elapsed(&mut self, time: i64) {
         self.elapsed = time;
     }
 
@@ -69,7 +74,7 @@ impl Animation for Attack {
     }
 }
 pub struct Release {
-    elapsed: usize,
+    elapsed: i64,
     duration: usize,
     tweener: StoredTweener,
 }
@@ -87,10 +92,10 @@ impl Animation for Release {
             tweener: Tweener::new(start_brightness, target_brightness, duration, tween),
         }
     }
-    fn get_elapsed(&self) -> usize {
+    fn get_elapsed(&self) -> i64 {
         self.elapsed
     }
-    fn set_elapsed(&mut self, time: usize) {
+    fn set_elapsed(&mut self, time: i64) {
         self.elapsed = time;
     }
     fn get_tweener(&mut self) -> &mut StoredTweener {

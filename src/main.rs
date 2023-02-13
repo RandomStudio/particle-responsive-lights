@@ -33,14 +33,21 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
         let position = target_particle.position;
         for p in model.particles.iter_mut() {
             if p.id == id {
-                activate_single(p, *duration, style, p.brightness, 1.0);
+                activate_single(p, *duration, style, p.brightness, 1.0, 0);
             } else {
                 let distance = position.distance(p.position);
                 if distance <= *max_range {
                     if let Some(new_brightness_target) =
                         possibly_activate_by_transmission(p, distance, *max_range)
                     {
-                        activate_single(p, *duration, style, p.brightness, new_brightness_target)
+                        activate_single(
+                            p,
+                            *duration,
+                            style,
+                            p.brightness,
+                            new_brightness_target,
+                            map_range(distance, 0., *max_range, 0, 1000),
+                        )
                     }
                 }
             }
@@ -54,13 +61,16 @@ fn activate_single(
     ease_style: &EaseStyle,
     start_brightness: f32,
     target_brightness: f32,
+    delay: i64,
 ) {
-    p.animation = EnvelopeStage::AttackAnimation(Attack::new(
+    let mut attack = Attack::new(
         duration,
         start_brightness,
         target_brightness,
         get_tween(&ease_style),
-    ))
+    );
+    attack.set_elapsed(-delay);
+    p.animation = EnvelopeStage::AttackAnimation(attack);
 }
 
 fn possibly_activate_by_transmission(
