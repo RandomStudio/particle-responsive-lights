@@ -5,9 +5,10 @@ use settings::{build_ui, EaseStyle, PhaseSettings, Settings};
 const DEFAULT_COUNT: usize = 7;
 const DEFAULT_THICKNESS: f32 = 10.;
 const DEFAULT_LENGTH: f32 = 200.;
-const DEFAULT_ATTACK_DURATION: usize = 125;
+const DEFAULT_ATTACK_DURATION: usize = 300;
 const DEFAULT_RELEASE_DURATION: usize = 2500;
 const DEFAULT_SHOW_B_INDICATOR: bool = true;
+pub const DEFAULT_WIDTH_RATIO: f32 = 0.6;
 
 mod animation;
 use crate::animation::*;
@@ -62,6 +63,7 @@ fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event:
 fn model(app: &App) -> Model {
     let window_id = app
         .new_window()
+        .size(1920, 720)
         .view(view)
         .mouse_pressed(mouse_pressed)
         .mouse_moved(mouse_moved)
@@ -77,7 +79,7 @@ fn model(app: &App) -> Model {
         mouse_position: Point2::new(0., 0.),
         particles: build_layout(
             DEFAULT_COUNT,
-            window.rect().w() * 0.8,
+            window.rect().w() * DEFAULT_WIDTH_RATIO,
             window.rect().h() * 0.2,
         ),
         settings: Settings {

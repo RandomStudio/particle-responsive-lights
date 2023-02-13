@@ -4,6 +4,7 @@ use nannou::prelude::Rect;
 use nannou_egui::egui::{self, ComboBox};
 use tween::*;
 
+use crate::DEFAULT_WIDTH_RATIO;
 use crate::{particles::build_layout, Model};
 
 use std::string::ToString;
@@ -105,8 +106,11 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
         ui.add(egui::Slider::new(chimes_count, 1..=30));
         let current_count = chimes_count.to_owned();
         if ui.button("update").clicked() {
-            model.particles =
-                build_layout(current_count, window_rect.w() * 0.8, window_rect.h() * 0.2)
+            model.particles = build_layout(
+                current_count,
+                window_rect.w() * DEFAULT_WIDTH_RATIO,
+                window_rect.h() * 0.2,
+            )
         }
 
         ui.separator();
