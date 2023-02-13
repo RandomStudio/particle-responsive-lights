@@ -1,7 +1,7 @@
 use nannou::prelude::*;
 use nannou_egui::egui::ComboBox;
 use nannou_egui::{self, egui, Egui};
-use tween::{BounceIn, BounceOut, Linear, SineInOut, Tween};
+use settings::{build_ui, EaseStyle, PhaseSettings, Settings};
 
 const DEFAULT_COUNT: usize = 7;
 const DEFAULT_THICKNESS: f32 = 10.;
@@ -13,44 +13,17 @@ const DEFAULT_SHOW_B_INDICATOR: bool = true;
 mod animation;
 use crate::animation::*;
 
+mod settings;
+
 mod particles;
 use crate::particles::*;
+use crate::settings::get_tween;
 
 fn main() {
     nannou::app(model).update(update).run();
 }
 
-#[derive(PartialEq, Debug)]
-enum EaseStyle {
-    Linear,
-    BounceIn,
-    BounceOut,
-    SineInOut,
-}
-
-fn get_tween(style: &EaseStyle) -> Box<dyn Tween<f32>> {
-    match style {
-        EaseStyle::Linear => Box::new(Linear),
-        EaseStyle::BounceIn => Box::new(BounceIn),
-        EaseStyle::BounceOut => Box::new(BounceOut),
-        EaseStyle::SineInOut => Box::new(SineInOut),
-    }
-}
-
-struct PhaseSettings {
-    duration: usize,
-    style: EaseStyle,
-}
-
-struct Settings {
-    chimes_count: usize,
-    show_brightness_indicator: bool,
-    chime_thickness: f32,
-    chime_length: f32,
-    attack_settings: PhaseSettings,
-    release_settings: PhaseSettings,
-}
-struct Model {
+pub struct Model {
     window_id: WindowId,
     particles: Vec<Particle>,
     mouse_position: Point2,
@@ -114,7 +87,7 @@ fn model(app: &App) -> Model {
             chime_length: DEFAULT_LENGTH,
             attack_settings: PhaseSettings {
                 duration: DEFAULT_ATTACK_DURATION,
-                style: EaseStyle::SineInOut,
+                style: EaseStyle::SineBoth,
             },
             release_settings: PhaseSettings {
                 duration: DEFAULT_RELEASE_DURATION,
@@ -129,116 +102,9 @@ fn model(app: &App) -> Model {
 // ---------------- Update before drawing ever frame
 
 fn update(app: &App, model: &mut Model, update: Update) {
-    let egui = &mut model.egui;
+    let window = app.window(model.window_id).unwrap();
 
-    egui.set_elapsed_time(update.since_start);
-    let ctx = egui.begin_frame();
-
-    egui::Window::new("Settings").show(&ctx, |ui| {
-        let settings = &mut model.settings;
-
-        ui.label("Chimes count:");
-        ui.add(egui::Slider::new(&mut settings.chimes_count, 1..=30));
-        let current_count = settings.chimes_count.to_owned();
-        if ui.button("update").clicked() {
-            // println!("chimes count change to {}", model.settings.chimes_count);
-            let window = app.window(model.window_id).unwrap();
-
-            model.particles = build_layout(
-                current_count,
-                window.rect().w() * 0.8,
-                window.rect().h() * 0.2,
-            )
-        }
-
-        ui.separator();
-
-        ui.checkbox(
-            &mut settings.show_brightness_indicator,
-            "Brightness indicator",
-        );
-
-        ui.label("Chimes thickness:");
-        ui.add(egui::Slider::new(&mut settings.chime_thickness, 1. ..=200.));
-
-        ui.label("Chimes length:");
-        ui.add(egui::Slider::new(&mut settings.chime_length, 10. ..=2000.));
-
-        ui.separator();
-
-        ui.label("Attack duration:");
-        ui.add(egui::Slider::new(
-            &mut settings.attack_settings.duration,
-            1..=10000,
-        ));
-        ui.add(egui::DragValue::new(&mut settings.attack_settings.duration).clamp_range(1..=10000));
-
-        ui.label("Release duration:");
-
-        ui.add(egui::Slider::new(
-            &mut settings.release_settings.duration,
-            1..=10000,
-        ));
-        ui.add(
-            egui::DragValue::new(&mut settings.release_settings.duration).clamp_range(1..=10000),
-        );
-
-        ui.separator();
-
-        ComboBox::from_label("Attack-phase Tween")
-            .selected_text(format!("{:?}", model.settings.attack_settings.style))
-            .show_ui(ui, |ui| {
-                ui.style_mut().wrap = Some(false);
-                ui.set_min_width(60.0);
-                ui.selectable_value(
-                    &mut model.settings.attack_settings.style,
-                    EaseStyle::Linear,
-                    "Linear",
-                );
-                ui.selectable_value(
-                    &mut model.settings.attack_settings.style,
-                    EaseStyle::BounceIn,
-                    "BounceIn",
-                );
-                ui.selectable_value(
-                    &mut model.settings.attack_settings.style,
-                    EaseStyle::BounceOut,
-                    "BounceOut",
-                );
-                ui.selectable_value(
-                    &mut model.settings.attack_settings.style,
-                    EaseStyle::SineInOut,
-                    "SineInOut",
-                );
-            });
-
-        ComboBox::from_label("Release-phase Tween")
-            .selected_text(format!("{:?}", model.settings.release_settings.style))
-            .show_ui(ui, |ui| {
-                ui.style_mut().wrap = Some(false);
-                ui.set_min_width(60.0);
-                ui.selectable_value(
-                    &mut model.settings.release_settings.style,
-                    EaseStyle::Linear,
-                    "Linear",
-                );
-                ui.selectable_value(
-                    &mut model.settings.release_settings.style,
-                    EaseStyle::BounceIn,
-                    "BounceIn",
-                );
-                ui.selectable_value(
-                    &mut model.settings.release_settings.style,
-                    EaseStyle::BounceOut,
-                    "BounceOut",
-                );
-                ui.selectable_value(
-                    &mut model.settings.release_settings.style,
-                    EaseStyle::SineInOut,
-                    "SineInOut",
-                );
-            });
-    });
+    build_ui(model, update.since_start, window.rect());
 
     for p in &mut model.particles {
         let animation = &mut p.animation;
