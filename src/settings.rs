@@ -33,6 +33,7 @@ pub struct PhaseSettings {
 
 pub struct TransmissionSettings {
     pub max_range: f32,
+    pub max_delay: i64,
 }
 
 pub struct Settings {
@@ -77,6 +78,7 @@ impl Model {
                 },
                 transmission_settings: TransmissionSettings {
                     max_range: DEFAULT_WINDOW_W.to_f32() * 0.2,
+                    max_delay: 1000,
                 },
                 show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
             },
@@ -220,9 +222,15 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
         ui.separator();
 
-        let TransmissionSettings { max_range } = transmission_settings;
+        let TransmissionSettings {
+            max_range,
+            max_delay,
+        } = transmission_settings;
 
         ui.label("Transmission range");
-        ui.add(egui::Slider::new(max_range, 0. ..=1000.))
+        ui.add(egui::Slider::new(max_range, 0. ..=1000.));
+
+        ui.label("Transmission max delay");
+        ui.add(egui::Slider::new(max_delay, 0..=4000))
     });
 }

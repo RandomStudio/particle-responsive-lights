@@ -21,7 +21,10 @@ fn main() {
 fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
     println!("mouse pressed at position {}", model.mouse_position);
     let PhaseSettings { duration, style } = &model.settings.attack_settings;
-    let TransmissionSettings { max_range } = &model.settings.transmission_settings;
+    let TransmissionSettings {
+        max_range,
+        max_delay,
+    } = &model.settings.transmission_settings;
 
     if let Some(target_particle) = model.particles.iter().find(|p| {
         let tolerance = &model.settings.chime_thickness * 2.;
@@ -46,7 +49,7 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
                             style,
                             p.brightness,
                             new_brightness_target,
-                            map_range(distance, 0., *max_range, 0, 1000),
+                            map_range(distance, 0., *max_range, 0, *max_delay),
                         )
                     }
                 }
