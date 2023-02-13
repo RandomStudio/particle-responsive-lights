@@ -1,7 +1,7 @@
 use nannou::prelude::*;
+use nannou_egui::egui::ComboBox;
 use nannou_egui::{self, egui, Egui};
-use tween::BounceOut;
-use tween::SineInOut;
+use tween::{BounceIn, BounceOut, Linear, SineInOut, Tween};
 
 const DEFAULT_COUNT: usize = 7;
 const DEFAULT_THICKNESS: f32 = 10.;
@@ -20,13 +20,35 @@ fn main() {
     nannou::app(model).update(update).run();
 }
 
+#[derive(PartialEq, Debug)]
+enum EaseStyle {
+    Linear,
+    BounceIn,
+    BounceOut,
+    SineInOut,
+}
+
+fn get_tween(style: &EaseStyle) -> Box<dyn Tween<f32>> {
+    match style {
+        EaseStyle::Linear => Box::new(Linear),
+        EaseStyle::BounceIn => Box::new(BounceIn),
+        EaseStyle::BounceOut => Box::new(BounceOut),
+        EaseStyle::SineInOut => Box::new(SineInOut),
+    }
+}
+
+struct PhaseSettings {
+    duration: usize,
+    style: EaseStyle,
+}
+
 struct Settings {
     chimes_count: usize,
     show_brightness_indicator: bool,
     chime_thickness: f32,
     chime_length: f32,
-    attack_duration: usize,
-    release_duration: usize,
+    attack_settings: PhaseSettings,
+    release_settings: PhaseSettings,
 }
 struct Model {
     window_id: WindowId,
@@ -47,9 +69,9 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
     }) {
         println!("clicked on particle!");
         close_particle.animation = EnvelopeStage::AttackAnimation(Attack::new(
-            model.settings.attack_duration,
+            model.settings.attack_settings.duration,
             close_particle.brightness,
-            Box::new(SineInOut),
+            get_tween(&model.settings.attack_settings.style),
         ))
     }
 }
@@ -90,8 +112,14 @@ fn model(app: &App) -> Model {
             chimes_count: DEFAULT_COUNT,
             chime_thickness: DEFAULT_THICKNESS,
             chime_length: DEFAULT_LENGTH,
-            attack_duration: DEFAULT_ATTACK_DURATION,
-            release_duration: DEFAULT_RELEASE_DURATION,
+            attack_settings: PhaseSettings {
+                duration: DEFAULT_ATTACK_DURATION,
+                style: EaseStyle::SineInOut,
+            },
+            release_settings: PhaseSettings {
+                duration: DEFAULT_RELEASE_DURATION,
+                style: EaseStyle::BounceIn,
+            },
             show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
         },
         egui,
@@ -139,10 +167,77 @@ fn update(app: &App, model: &mut Model, update: Update) {
         ui.separator();
 
         ui.label("Attack duration:");
-        ui.add(egui::Slider::new(&mut settings.attack_duration, 1..=2000));
+        ui.add(egui::Slider::new(
+            &mut settings.attack_settings.duration,
+            1..=10000,
+        ));
+        ui.add(egui::DragValue::new(&mut settings.attack_settings.duration).clamp_range(1..=10000));
 
         ui.label("Release duration:");
-        ui.add(egui::Slider::new(&mut settings.release_duration, 1..=15000));
+
+        ui.add(egui::Slider::new(
+            &mut settings.release_settings.duration,
+            1..=10000,
+        ));
+        ui.add(
+            egui::DragValue::new(&mut settings.release_settings.duration).clamp_range(1..=10000),
+        );
+
+        ui.separator();
+
+        ComboBox::from_label("Attack-phase Tween")
+            .selected_text(format!("{:?}", model.settings.attack_settings.style))
+            .show_ui(ui, |ui| {
+                ui.style_mut().wrap = Some(false);
+                ui.set_min_width(60.0);
+                ui.selectable_value(
+                    &mut model.settings.attack_settings.style,
+                    EaseStyle::Linear,
+                    "Linear",
+                );
+                ui.selectable_value(
+                    &mut model.settings.attack_settings.style,
+                    EaseStyle::BounceIn,
+                    "BounceIn",
+                );
+                ui.selectable_value(
+                    &mut model.settings.attack_settings.style,
+                    EaseStyle::BounceOut,
+                    "BounceOut",
+                );
+                ui.selectable_value(
+                    &mut model.settings.attack_settings.style,
+                    EaseStyle::SineInOut,
+                    "SineInOut",
+                );
+            });
+
+        ComboBox::from_label("Release-phase Tween")
+            .selected_text(format!("{:?}", model.settings.release_settings.style))
+            .show_ui(ui, |ui| {
+                ui.style_mut().wrap = Some(false);
+                ui.set_min_width(60.0);
+                ui.selectable_value(
+                    &mut model.settings.release_settings.style,
+                    EaseStyle::Linear,
+                    "Linear",
+                );
+                ui.selectable_value(
+                    &mut model.settings.release_settings.style,
+                    EaseStyle::BounceIn,
+                    "BounceIn",
+                );
+                ui.selectable_value(
+                    &mut model.settings.release_settings.style,
+                    EaseStyle::BounceOut,
+                    "BounceOut",
+                );
+                ui.selectable_value(
+                    &mut model.settings.release_settings.style,
+                    EaseStyle::SineInOut,
+                    "SineInOut",
+                );
+            });
     });
 
     for p in &mut model.particles {
@@ -162,9 +257,9 @@ fn update(app: &App, model: &mut Model, update: Update) {
                 if done {
                     println!("end Attack => Release");
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
-                        model.settings.release_duration,
+                        model.settings.release_settings.duration,
                         p.brightness,
-                        Box::new(BounceOut),
+                        get_tween(&model.settings.release_settings.style),
                     ))
                 }
             }
