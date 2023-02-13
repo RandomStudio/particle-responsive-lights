@@ -1,5 +1,6 @@
 use nannou::prelude::*;
 use nannou_egui::{self, egui, Egui};
+use tween::BounceOut;
 use tween::SineInOut;
 
 const DEFAULT_COUNT: usize = 7;
@@ -163,7 +164,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
                         model.settings.release_duration,
                         p.brightness,
-                        Box::new(SineInOut),
+                        Box::new(BounceOut),
                     ))
                 }
             }
