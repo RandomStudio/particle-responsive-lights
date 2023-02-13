@@ -74,6 +74,7 @@ fn activate_single(
     );
     attack.set_elapsed(-delay);
     p.animation = EnvelopeStage::AttackAnimation(attack);
+    println!("#{} activate", p.id);
 }
 
 fn possibly_activate_by_transmission(
@@ -140,7 +141,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                 let (brightness, done) = a.get_brightness_and_done(delta_time);
                 p.brightness = brightness;
                 if done {
-                    println!("end Attack => Release");
+                    println!("#{} end Attack => Release", p.id);
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
                         model.settings.release_settings.duration,
                         p.brightness,
@@ -153,7 +154,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                 let (brightness, done) = a.get_brightness_and_done(delta_time);
                 p.brightness = brightness;
                 if done {
-                    println!("end Release => Idle");
+                    println!("#{} end Release => Idle", p.id);
                     p.animation = EnvelopeStage::Idle()
                 }
             }
