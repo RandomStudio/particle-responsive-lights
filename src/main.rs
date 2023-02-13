@@ -1,6 +1,7 @@
 use nannou::prelude::*;
 use nannou_egui::{self, egui, Egui};
 
+const COUNT: usize = 7;
 const THICKNESS: f32 = 10.;
 const LENGTH: f32 = 200.;
 const ATTACK_DURATION: u16 = 125;
@@ -17,12 +18,14 @@ fn main() {
 }
 
 struct Settings {
+    chimes_count: usize,
     chime_thickness: f32,
     chime_length: f32,
     attack_duration: u16,
     release_duration: u16,
 }
 struct Model {
+    window_id: WindowId,
     particles: Vec<Particle>,
     mouse_position: Point2,
     egui: Egui,
@@ -71,16 +74,12 @@ fn model(app: &App) -> Model {
     let window = app.window(window_id).unwrap();
     let egui = Egui::from_window(&window);
 
-    let count = 8;
-
     Model {
+        window_id,
         mouse_position: Point2::new(0., 0.),
-        particles: build_layout(
-            count,
-            Point2::new(window.rect().left(), 0.),
-            window.rect().w() / count.to_f32().unwrap(),
-        ),
+        particles: build_layout(COUNT, window.rect().w() * 0.8, window.rect().h() * 0.2),
         settings: Settings {
+            chimes_count: COUNT,
             chime_thickness: THICKNESS,
             chime_length: LENGTH,
             attack_duration: ATTACK_DURATION,
@@ -94,12 +93,40 @@ fn model(app: &App) -> Model {
 
 fn update(app: &App, model: &mut Model, update: Update) {
     let egui = &mut model.egui;
-    let settings = &mut model.settings;
 
     egui.set_elapsed_time(update.since_start);
     let ctx = egui.begin_frame();
 
     egui::Window::new("Settings").show(&ctx, |ui| {
+        let settings = &mut model.settings;
+
+        ui.label("Chimes count:");
+        ui.add(egui::Slider::new(&mut settings.chimes_count, 1..=30));
+        let current_count = settings.chimes_count.to_owned();
+        if ui.button("update").clicked() {
+            // println!("chimes count change to {}", model.settings.chimes_count);
+            let window = app.window(model.window_id).unwrap();
+
+            model.particles = build_layout(
+                current_count,
+                window.rect().w() * 0.8,
+                window.rect().h() * 0.2,
+            )
+        }
+
+        // TODO: below cannot work because of ownership
+        // let window = app.window(model.window_id).unwrap();
+        // if response.changed() {
+        //     println!("chimes count change to {}", model.settings.chimes_count);
+        //     // model.particles = build_layout(
+        //     //     model.settings.chimes_count,
+        //     //     Point2::new(window.rect().left(), 0.),
+        //     //     window.rect().w() / COUNT.to_f32().unwrap(),
+        //     // )
+        // }
+
+        ui.separator();
+
         ui.label("Chimes thickness:");
         ui.add(egui::Slider::new(&mut settings.chime_thickness, 1. ..=200.));
 
