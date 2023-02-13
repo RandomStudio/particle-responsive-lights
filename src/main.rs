@@ -1,6 +1,6 @@
 use nannou::prelude::*;
 use nannou_egui::{self, egui, Egui};
-use tween::Tweener;
+use tween::SineInOut;
 
 const DEFAULT_COUNT: usize = 7;
 const DEFAULT_THICKNESS: f32 = 10.;
@@ -48,6 +48,7 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
         close_particle.animation = EnvelopeStage::AttackAnimation(Attack::new(
             model.settings.attack_duration,
             close_particle.brightness,
+            Box::new(SineInOut),
         ))
     }
 }
@@ -162,6 +163,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
                         model.settings.release_duration,
                         p.brightness,
+                        Box::new(SineInOut),
                     ))
                 }
             }
