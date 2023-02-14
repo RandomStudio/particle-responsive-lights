@@ -5,7 +5,7 @@ Each chime is a "particle" in this system.
 ## TODO
 - [x] Implement "transmission" effects
 - [x] Implement transmission with delay
-- [ ] Transmission should not make neighbours start on black (return None rather than progress=0. for delayed start)
+- [x] Transmission should not make neighbours start on black (return None rather than progress=0. for delayed start)
 - [ ] Display FPS
 - [ ] Output ArtNet
 - [ ] Load/save settings

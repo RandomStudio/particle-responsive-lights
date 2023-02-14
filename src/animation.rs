@@ -18,22 +18,27 @@ pub trait Animation {
     fn get_tweener(&mut self) -> &mut StoredTweener;
 
     /// Update the animation using delta time, get the progress in the range `[0,1]`
-    fn update(&mut self, delta_time: usize) -> f32 {
+    /// Only return a new progress value if the animation is actually updating;
+    /// for example when there is a delayed start, leave the progress alone
+    fn update(&mut self, delta_time: usize) -> Option<f32> {
         let elapsed = self.get_elapsed() + delta_time.to_i64().unwrap();
         self.set_elapsed(elapsed);
 
         if elapsed >= 0 {
             // let progress = elapsed.to_f64().unwrap() / self.duration().to_f64().unwrap();
             let progress = self.get_tweener().move_by(delta_time);
-            progress
+            Some(progress)
         } else {
-            0.
+            None
         }
     }
 
     fn get_brightness_and_done(&mut self, delta_time: usize) -> (f32, bool) {
-        let brightness = self.update(delta_time);
-        (brightness, self.get_tweener().is_finished())
+        if let Some(brightness) = self.update(delta_time) {
+            (brightness, self.get_tweener().is_finished())
+        } else {
+            (self.get_tweener().initial_value(), false)
+        }
     }
 }
 
