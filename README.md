@@ -2,13 +2,17 @@
 
 Each chime is a "particle" in this system.
 
-## TODO
-- [x] Implement "transmission" effects
-- [x] Implement transmission with delay
-- [x] Transmission should not make neighbours start on black (return None rather than progress=0. for delayed start)
-- [ ] Display FPS
-- [ ] Output ArtNet
-- [ ] Load/save settings
-- [ ] Load custom, specific arrangement of chimes
-- [ ] Plot selected ease curves on GUI
-- [ ] Allow for non-linear mapping of brightness ("real" brightness -> "boosted-shadows" brightness, for example)
+## Development setup
+- Clone the repo
+- Run `cargo run`
+
+That's it. (Assuming your Rust environment is reasonably up to date.)
+
+## Tech stack
+- [Nannou](https://nannou.cc/): creative coding framework
+- [Tween crate](https://docs.rs/tween/2.0.0/tween/index.html) as per the OG Robert Penning ease functions ([demo](https://easings.net/#))
+- [Strum](https://crates.io/crates/strum) and [Strum macros](https://crates.io/crates/strum_macros), specfically for dealing with enums in a way that is convenient for the GUI
+
+Not yet integrated:
+- ArtNet (will probably use [artnet_protocol](https://docs.rs/artnet_protocol/0.4.1/artnet_protocol/index.html)) although this is pretty low-level!
+- MQTT + MessagePack = Tether
