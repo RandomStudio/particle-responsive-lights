@@ -11,10 +11,15 @@ mod settings;
 mod particles;
 use crate::particles::*;
 use crate::settings::get_tween;
+use crate::tether::TetherConnection;
 
 mod artnet;
 
+mod tether;
+
 fn main() {
+    println!("Started");
+
     nannou::app(model).update(update).run();
 }
 
@@ -118,7 +123,9 @@ fn model(app: &App) -> Model {
     let window = app.window(window_id).unwrap();
     let egui = Egui::from_window(&window);
 
-    Model::defaults(window_id, egui)
+    let mut tether = TetherConnection::new();
+    tether.connect();
+    Model::defaults(window_id, egui, tether)
 }
 
 // ---------------- Update before drawing every frame
@@ -172,6 +179,10 @@ fn update(app: &App, model: &mut Model, update: Update) {
     }
 
     model.artnet.update(&model.particles);
+
+    if model.tether.is_connected() {
+        model.tether.check_messages();
+    }
 }
 
 // ---------------- Draw every frame

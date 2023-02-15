@@ -9,6 +9,7 @@ use tween::*;
 use crate::artnet::{ArtNetInterface, ArtNetMode};
 use crate::particles::build_layout;
 use crate::particles::Particle;
+use crate::tether::TetherConnection;
 
 use std::string::ToString;
 use strum::IntoEnumIterator;
@@ -55,10 +56,11 @@ pub struct Model {
     pub egui: Egui,
     pub settings: Settings,
     pub artnet: ArtNetInterface,
+    pub tether: TetherConnection,
 }
 
 impl Model {
-    pub fn defaults(window_id: WindowId, egui: Egui) -> Self {
+    pub fn defaults(window_id: WindowId, egui: Egui, tether: TetherConnection) -> Self {
         Model {
             window_id,
             particles: build_layout(
@@ -95,6 +97,7 @@ impl Model {
             //     SocketAddr::from(([127, 0, 0, 1], 6455)),
             //     SocketAddr::from(([192, 168, 2, 4], 6454)),
             // )),
+            tether,
         }
     }
 }
