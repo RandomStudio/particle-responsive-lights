@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use nannou::prelude::*;
-use nannou_egui::egui::{self, ComboBox};
+use nannou_egui::egui::{self, ComboBox, Slider};
 use nannou_egui::Egui;
 use tween::*;
 
@@ -150,7 +150,6 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
     let ctx = egui.begin_frame();
 
     egui::Window::new("Settings").show(&ctx, |ui| {
-        // let settings = &mut model.settings;
         let Settings {
             chimes_count,
             show_brightness_indicator,
@@ -166,7 +165,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
         ui.horizontal(|ui| {
             ui.label("Chimes count:");
-            ui.add(egui::Slider::new(chimes_count, 1..=30));
+            ui.add(Slider::new(chimes_count, 1..=30));
             let current_count = chimes_count.to_owned();
             if ui.button("update").clicked() {
                 model.particles = build_layout(
@@ -183,12 +182,12 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
         ui.horizontal(|ui| {
             ui.label("Chimes thickness:");
-            ui.add(egui::Slider::new(chime_thickness, 1. ..=200.).suffix("px"));
+            ui.add(Slider::new(chime_thickness, 1. ..=200.).suffix("px"));
         });
 
         ui.horizontal(|ui| {
             ui.label("Chimes length:");
-            ui.add(egui::Slider::new(chime_length, 10. ..=2000.).suffix("px"));
+            ui.add(Slider::new(chime_length, 10. ..=2000.).suffix("px"));
         });
 
         ui.separator();
@@ -197,7 +196,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
         ui.horizontal(|ui| {
             ui.label("Attack duration:");
-            ui.add(egui::Slider::new(duration, 1..=10000).suffix("ms"));
+            ui.add(Slider::new(duration, 1..=10000).suffix("ms"));
         });
 
         ComboBox::from_label("Attack-phase Tween")
@@ -215,7 +214,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
         ui.horizontal(|ui| {
             ui.label("Release duration:");
-            ui.add(egui::Slider::new(duration, 1..=10000).suffix("ms"));
+            ui.add(Slider::new(duration, 1..=10000).suffix("ms"));
         });
 
         ComboBox::from_label("Release-phase Tween")
@@ -236,12 +235,12 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
         ui.horizontal(|ui| {
             ui.label("Transmission range");
-            ui.add(egui::Slider::new(max_range, 0. ..=1000.).suffix("px"));
+            ui.add(Slider::new(max_range, 0. ..=1000.).suffix("px"));
         });
 
         ui.horizontal(|ui| {
             ui.label("Transmission max delay");
-            ui.add(egui::Slider::new(max_delay, 0..=4000).suffix("ms"))
+            ui.add(Slider::new(max_delay, 0..=4000).suffix("ms"))
         });
     });
 }

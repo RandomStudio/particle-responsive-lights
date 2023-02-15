@@ -70,7 +70,7 @@ fn activate_single(
         duration,
         start_brightness,
         target_brightness,
-        get_tween(&ease_style),
+        get_tween(ease_style),
     );
     attack.set_elapsed(-delay);
     p.animation = EnvelopeStage::AttackAnimation(attack);
