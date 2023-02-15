@@ -20,7 +20,7 @@ pub struct TetherConnection {
 
 #[derive(Deserialize, Debug)]
 struct LightTriggerMessage {
-    id: u8,
+    id: usize,
 }
 
 impl TetherConnection {
@@ -77,27 +77,45 @@ impl TetherConnection {
         }
     }
 
-    pub fn check_messages(&self) {
-        for msg in self.receiver.try_iter() {
-            // iter() blocks, try_iter() does not
-            if let Some(msg) = msg {
-                // println!("MQTT received: {}", msg);
-                let payload = msg.payload().to_vec();
-                let light_message: Result<LightTriggerMessage, rmp_serde::decode::Error> =
-                    rmp_serde::from_slice(&payload);
-                match light_message {
-                    Ok(parsed) => {
-                        println!("Parsed LightTriggerMessage: {:?}", parsed);
-                        // Some(parsed.id)
-                    }
-                    Err(e) => {
-                        println!("Error parsing LightTriggerMessage: {:?}", e);
-                        // None
-                    }
+    pub fn check_messages(&self) -> Option<usize> {
+        if let Some(m) = self.receiver.try_iter().find_map(|m| m) {
+            let payload = m.payload().to_vec();
+            let light_message: Result<LightTriggerMessage, rmp_serde::decode::Error> =
+                rmp_serde::from_slice(&payload);
+            match light_message {
+                Ok(parsed) => {
+                    println!("Parsed LightTriggerMessage: {:?}", parsed);
+                    Some(parsed.id)
                 }
-            } else {
-                // None
+                Err(e) => {
+                    println!("Error parsing LightTriggerMessage: {:?}", e);
+                    None
+                }
             }
+        } else {
+            None
         }
+
+        // for msg in self.receiver.try_iter() {
+        //     // iter() blocks, try_iter() does not
+        //     if let Some(msg) = msg {
+        //         // println!("MQTT received: {}", msg);
+        //         let payload = msg.payload().to_vec();
+        //         let light_message: Result<LightTriggerMessage, rmp_serde::decode::Error> =
+        //             rmp_serde::from_slice(&payload);
+        //         match light_message {
+        //             Ok(parsed) => {
+        //                 println!("Parsed LightTriggerMessage: {:?}", parsed);
+        //                 // Some(parsed.id)
+        //             }
+        //             Err(e) => {
+        //                 println!("Error parsing LightTriggerMessage: {:?}", e);
+        //                 // None
+        //             }
+        //         }
+        //     } else {
+        //         // None
+        //     }
+        // }
     }
 }

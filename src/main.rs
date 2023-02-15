@@ -181,7 +181,37 @@ fn update(app: &App, model: &mut Model, update: Update) {
     model.artnet.update(&model.particles);
 
     if model.tether.is_connected() {
-        model.tether.check_messages();
+        let PhaseSettings { duration, style } = &model.settings.attack_settings;
+        let TransmissionSettings {
+            max_range,
+            max_delay,
+        } = &model.settings.transmission_settings;
+        if let Some(id) = model.tether.check_messages() {
+            if let Some(target_particle) = model.particles.iter().find(|p| p.id == id) {
+                let position = target_particle.position;
+                for p in model.particles.iter_mut() {
+                    if p.id == id {
+                        activate_single(p, *duration, style, p.brightness, 1.0, 0);
+                    } else {
+                        let distance = position.distance(p.position);
+                        if distance <= *max_range {
+                            if let Some(new_brightness_target) =
+                                possibly_activate_by_transmission(p, distance, *max_range)
+                            {
+                                activate_single(
+                                    p,
+                                    *duration,
+                                    style,
+                                    p.brightness,
+                                    new_brightness_target,
+                                    map_range(distance, 0., *max_range, 0, *max_delay),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
