@@ -5,6 +5,7 @@ use nannou_egui::egui::{self, ComboBox, Slider};
 use nannou_egui::Egui;
 use tween::*;
 
+use crate::artnet::ArtNetInterface;
 use crate::particles::build_layout;
 use crate::particles::Particle;
 
@@ -52,6 +53,7 @@ pub struct Model {
     pub mouse_position: Point2,
     pub egui: Egui,
     pub settings: Settings,
+    pub artnet: ArtNetInterface,
 }
 
 impl Model {
@@ -83,6 +85,7 @@ impl Model {
                 show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
             },
             egui,
+            artnet: ArtNetInterface::new(),
         }
     }
 }
