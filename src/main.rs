@@ -126,15 +126,22 @@ fn update(app: &App, model: &mut Model, update: Update) {
 
     build_ui(model, update.since_start, window.rect());
 
+    let delta_time = app
+        .duration
+        .since_prev_update
+        .as_millis()
+        .to_usize()
+        .unwrap();
+
+    let title = format!(
+        "Particle Lights @{:?}fps",
+        (1000. / delta_time.to_f32().unwrap()).to_u32().unwrap_or(0)
+    );
+    app.main_window().set_title(&title);
+
     for p in &mut model.particles {
         let animation = &mut p.animation;
         // let current_time = app.duration.since_start.as_millis();
-        let delta_time = app
-            .duration
-            .since_prev_update
-            .as_millis()
-            .to_usize()
-            .unwrap();
 
         match animation {
             EnvelopeStage::AttackAnimation(a) => {
