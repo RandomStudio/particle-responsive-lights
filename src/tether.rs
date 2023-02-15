@@ -7,6 +7,7 @@ use std::{
 use futures::executor::block_on;
 use mqtt::{AsyncClient, Client, Message, Receiver};
 use paho_mqtt as mqtt;
+use serde::Deserialize;
 
 const INPUT_TOPIC: &str = "+/+/lightTriggers";
 
@@ -15,6 +16,11 @@ const TETHER_HOST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 pub struct TetherConnection {
     client: Client,
     receiver: Receiver<Option<Message>>,
+}
+
+#[derive(Deserialize, Debug)]
+struct LightTriggerMessage {
+    id: u8,
 }
 
 impl TetherConnection {
@@ -75,7 +81,22 @@ impl TetherConnection {
         for msg in self.receiver.try_iter() {
             // iter() blocks, try_iter() does not
             if let Some(msg) = msg {
-                println!("MQTT received: {}", msg);
+                // println!("MQTT received: {}", msg);
+                let payload = msg.payload().to_vec();
+                let light_message: Result<LightTriggerMessage, rmp_serde::decode::Error> =
+                    rmp_serde::from_slice(&payload);
+                match light_message {
+                    Ok(parsed) => {
+                        println!("Parsed LightTriggerMessage: {:?}", parsed);
+                        // Some(parsed.id)
+                    }
+                    Err(e) => {
+                        println!("Error parsing LightTriggerMessage: {:?}", e);
+                        // None
+                    }
+                }
+            } else {
+                // None
             }
         }
     }
