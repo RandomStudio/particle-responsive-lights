@@ -1,3 +1,4 @@
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::time::Duration;
 
 use nannou::prelude::*;
@@ -5,7 +6,7 @@ use nannou_egui::egui::{self, ComboBox, Slider};
 use nannou_egui::Egui;
 use tween::*;
 
-use crate::artnet::ArtNetInterface;
+use crate::artnet::{ArtNetInterface, ArtNetMode};
 use crate::particles::build_layout;
 use crate::particles::Particle;
 
@@ -85,7 +86,15 @@ impl Model {
                 show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
             },
             egui,
-            artnet: ArtNetInterface::new(),
+            // artnet: ArtNetInterface::new(ArtNetMode::Broadcast),
+            // artnet: ArtNetInterface::new(ArtNetMode::UnicastAllInterfaces(SocketAddr::from((
+            //     [127, 0, 0, 1],
+            //     6454,
+            // )))),
+            artnet: ArtNetInterface::new(ArtNetMode::UnicastSpecifyInterface(
+                SocketAddr::from(([127, 0, 0, 1], 6455)),
+                SocketAddr::from(([192, 168, 2, 4], 6454)),
+            )),
         }
     }
 }

@@ -6,21 +6,50 @@ use crate::particles::Particle;
 
 pub struct ArtNetInterface {
     socket: UdpSocket,
-    broadcast_addr: SocketAddr,
+    destination: SocketAddr,
+}
+
+pub enum ArtNetMode {
+    Broadcast,
+    /// Specify destination address only
+    UnicastAllInterfaces(SocketAddr),
+    /// Specify from (interface) + to (destination) addresses
+    UnicastSpecifyInterface(SocketAddr, SocketAddr),
 }
 
 impl ArtNetInterface {
-    pub fn new() -> Self {
-        let socket = UdpSocket::bind(("0.0.0.0", 6455)).unwrap();
-        let broadcast_addr = ("255.255.255.255", 6454)
-            .to_socket_addrs()
-            .unwrap()
-            .next()
-            .unwrap();
-        socket.set_broadcast(true).unwrap();
-        ArtNetInterface {
-            socket,
-            broadcast_addr,
+    pub fn new(mode: ArtNetMode) -> Self {
+        match mode {
+            ArtNetMode::Broadcast => {
+                let socket = UdpSocket::bind((String::from("0.0.0.0"), 6455)).unwrap();
+                let broadcast_addr = ("255.255.255.255", 6454)
+                    .to_socket_addrs()
+                    .unwrap()
+                    .next()
+                    .unwrap();
+                socket.set_broadcast(true).unwrap();
+                ArtNetInterface {
+                    socket,
+                    destination: broadcast_addr,
+                }
+            }
+            ArtNetMode::UnicastAllInterfaces(destination) => {
+                let socket = UdpSocket::bind((String::from("0.0.0.0"), 6455)).unwrap();
+                socket.set_broadcast(false).unwrap();
+                ArtNetInterface {
+                    socket,
+                    destination,
+                }
+            }
+            ArtNetMode::UnicastSpecifyInterface(src, destination) => {
+                let socket = UdpSocket::bind(src).unwrap();
+
+                socket.set_broadcast(false).unwrap();
+                ArtNetInterface {
+                    socket,
+                    destination,
+                }
+            }
         }
     }
 
@@ -39,6 +68,6 @@ impl ArtNetInterface {
             ..Output::default()
         });
         let buff = command.write_to_buffer().unwrap();
-        self.socket.send_to(&buff, self.broadcast_addr).unwrap();
+        self.socket.send_to(&buff, self.destination).unwrap();
     }
 }
