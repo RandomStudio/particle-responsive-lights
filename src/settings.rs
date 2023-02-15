@@ -164,34 +164,41 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
         ui.set_min_height(600.);
 
-        ui.label("Chimes count:");
-        ui.add(egui::Slider::new(chimes_count, 1..=30));
-        let current_count = chimes_count.to_owned();
-        if ui.button("update").clicked() {
-            model.particles = build_layout(
-                current_count,
-                window_rect.w() * DEFAULT_WIDTH_RATIO,
-                window_rect.h() * 0.2,
-            )
-        }
+        ui.horizontal(|ui| {
+            ui.label("Chimes count:");
+            ui.add(egui::Slider::new(chimes_count, 1..=30));
+            let current_count = chimes_count.to_owned();
+            if ui.button("update").clicked() {
+                model.particles = build_layout(
+                    current_count,
+                    window_rect.w() * DEFAULT_WIDTH_RATIO,
+                    window_rect.h() * 0.2,
+                )
+            }
+        });
 
         ui.separator();
 
         ui.checkbox(show_brightness_indicator, "Brightness indicator");
 
-        ui.label("Chimes thickness:");
-        ui.add(egui::Slider::new(chime_thickness, 1. ..=200.));
+        ui.horizontal(|ui| {
+            ui.label("Chimes thickness:");
+            ui.add(egui::Slider::new(chime_thickness, 1. ..=200.).suffix("px"));
+        });
 
-        ui.label("Chimes length:");
-        ui.add(egui::Slider::new(chime_length, 10. ..=2000.));
+        ui.horizontal(|ui| {
+            ui.label("Chimes length:");
+            ui.add(egui::Slider::new(chime_length, 10. ..=2000.).suffix("px"));
+        });
 
         ui.separator();
 
         let PhaseSettings { duration, style } = attack_settings;
 
-        ui.label("Attack duration:");
-        ui.add(egui::Slider::new(duration, 1..=10000));
-        ui.add(egui::DragValue::new(duration).clamp_range(1..=10000));
+        ui.horizontal(|ui| {
+            ui.label("Attack duration:");
+            ui.add(egui::Slider::new(duration, 1..=10000).suffix("ms"));
+        });
 
         ComboBox::from_label("Attack-phase Tween")
             .selected_text(style.to_string())
@@ -206,10 +213,10 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
         ui.separator();
 
-        ui.label("Release duration:");
-
-        ui.add(egui::Slider::new(duration, 1..=10000));
-        ui.add(egui::DragValue::new(duration).clamp_range(1..=10000));
+        ui.horizontal(|ui| {
+            ui.label("Release duration:");
+            ui.add(egui::Slider::new(duration, 1..=10000).suffix("ms"));
+        });
 
         ComboBox::from_label("Release-phase Tween")
             .selected_text(style.to_string())
@@ -227,10 +234,14 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             max_delay,
         } = transmission_settings;
 
-        ui.label("Transmission range");
-        ui.add(egui::Slider::new(max_range, 0. ..=1000.));
+        ui.horizontal(|ui| {
+            ui.label("Transmission range");
+            ui.add(egui::Slider::new(max_range, 0. ..=1000.).suffix("px"));
+        });
 
-        ui.label("Transmission max delay");
-        ui.add(egui::Slider::new(max_delay, 0..=4000))
+        ui.horizontal(|ui| {
+            ui.label("Transmission max delay");
+            ui.add(egui::Slider::new(max_delay, 0..=4000).suffix("ms"))
+        });
     });
 }
