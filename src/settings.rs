@@ -86,15 +86,15 @@ impl Model {
                 show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
             },
             egui,
-            // artnet: ArtNetInterface::new(ArtNetMode::Broadcast),
+            artnet: ArtNetInterface::new(ArtNetMode::Broadcast),
             // artnet: ArtNetInterface::new(ArtNetMode::UnicastAllInterfaces(SocketAddr::from((
             //     [127, 0, 0, 1],
             //     6454,
             // )))),
-            artnet: ArtNetInterface::new(ArtNetMode::UnicastSpecifyInterface(
-                SocketAddr::from(([127, 0, 0, 1], 6455)),
-                SocketAddr::from(([192, 168, 2, 4], 6454)),
-            )),
+            // artnet: ArtNetInterface::new(ArtNetMode::UnicastSpecifyInterface(
+            //     SocketAddr::from(([127, 0, 0, 1], 6455)),
+            //     SocketAddr::from(([192, 168, 2, 4], 6454)),
+            // )),
         }
     }
 }
