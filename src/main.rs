@@ -111,7 +111,6 @@ fn model(app: &App) -> Model {
         .view(view)
         .mouse_pressed(mouse_pressed)
         .mouse_moved(mouse_moved)
-        .key_pressed(key_pressed)
         .raw_event(raw_window_event)
         .build()
         .unwrap();
@@ -171,6 +170,8 @@ fn update(app: &App, model: &mut Model, update: Update) {
             EnvelopeStage::Idle() => {}
         }
     }
+
+    model.artnet.update(&model.particles);
 }
 
 // ---------------- Draw every frame
@@ -201,9 +202,4 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     draw.to_frame(app, &frame).unwrap();
     model.egui.draw_to_frame(&frame).unwrap();
-}
-
-fn key_pressed(_app: &App, model: &mut Model, key: Key) {
-    println!("Key pressed! {:?}", key);
-    model.artnet.update();
 }
