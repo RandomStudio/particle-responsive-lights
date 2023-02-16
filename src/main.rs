@@ -33,7 +33,9 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
         max_delay,
     } = &model.settings.transmission_settings;
 
-    if let Some(target_particle) = model.particles.iter().find(|p| {
+    let particles = &mut model.particles;
+
+    if let Some(target_particle) = particles.iter().find(|p| {
         let tolerance = &model.settings.chime_thickness * 2.;
         let left = p.position.x - tolerance;
         let right = p.position.x + tolerance;
@@ -41,31 +43,45 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
     }) {
         let id = target_particle.id;
         let position = target_particle.position;
-        for p in model.particles.iter_mut() {
-            if p.id == id {
-                activate_single(p, *duration, style, p.brightness, 1.0, 0);
-            } else {
-                let distance = position.distance(p.position);
-                if distance <= *max_range {
-                    if let Some(new_brightness_target) =
-                        possibly_activate_by_transmission(p, distance, *max_range)
-                    {
-                        activate_single(
-                            p,
-                            *duration,
-                            style,
-                            p.brightness,
-                            new_brightness_target,
-                            map_range(distance, 0., *max_range, 0, *max_delay),
-                        )
-                    }
+        trigger_activation(
+            particles, id, position, *duration, *max_range, *max_delay, &style,
+        );
+    }
+}
+
+fn trigger_activation(
+    particles: &mut Vec<Particle>,
+    main_target_id: usize,
+    main_target_position: Point2,
+    duration: usize,
+    max_range: f32,
+    max_delay: i64,
+    style: &EaseStyle,
+) {
+    for p in particles {
+        if p.id == main_target_id {
+            activate_main(p, duration, style, p.brightness, 1.0, 0);
+        } else {
+            let distance = main_target_position.distance(p.position);
+            if distance <= max_range {
+                if let Some(new_brightness_target) =
+                    possibly_activate_by_transmission(p, distance, max_range)
+                {
+                    activate_main(
+                        p,
+                        duration,
+                        style,
+                        p.brightness,
+                        new_brightness_target,
+                        map_range(distance, 0., max_range, 0, max_delay),
+                    )
                 }
             }
         }
     }
 }
 
-fn activate_single(
+fn activate_main(
     p: &mut Particle,
     duration: usize,
     ease_style: &EaseStyle,
@@ -186,30 +202,14 @@ fn update(app: &App, model: &mut Model, update: Update) {
             max_range,
             max_delay,
         } = &model.settings.transmission_settings;
+        let particles = &mut model.particles;
         if let Some(id) = model.tether.check_messages() {
-            if let Some(target_particle) = model.particles.iter().find(|p| p.id == id) {
+            if let Some(target_particle) = particles.iter().find(|p| p.id == id) {
                 let position = target_particle.position;
-                for p in model.particles.iter_mut() {
-                    if p.id == id {
-                        activate_single(p, *duration, style, p.brightness, 1.0, 0);
-                    } else {
-                        let distance = position.distance(p.position);
-                        if distance <= *max_range {
-                            if let Some(new_brightness_target) =
-                                possibly_activate_by_transmission(p, distance, *max_range)
-                            {
-                                activate_single(
-                                    p,
-                                    *duration,
-                                    style,
-                                    p.brightness,
-                                    new_brightness_target,
-                                    map_range(distance, 0., *max_range, 0, *max_delay),
-                                )
-                            }
-                        }
-                    }
-                }
+                let id = target_particle.id;
+                trigger_activation(
+                    particles, id, position, *duration, *max_range, *max_delay, &style,
+                );
             }
         }
     }
