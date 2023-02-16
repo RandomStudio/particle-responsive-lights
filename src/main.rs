@@ -1,6 +1,7 @@
+use clap::Parser;
 use nannou::prelude::*;
 use nannou_egui::Egui;
-use settings::{build_ui, EaseStyle, PhaseSettings, DEFAULT_WINDOW_H, DEFAULT_WINDOW_W};
+use settings::{build_ui, Cli, EaseStyle, PhaseSettings, DEFAULT_WINDOW_H, DEFAULT_WINDOW_W};
 use settings::{Model, TransmissionSettings};
 
 mod animation;
@@ -11,7 +12,6 @@ mod settings;
 mod particles;
 use crate::particles::*;
 use crate::settings::get_tween;
-use crate::tether::TetherConnection;
 
 mod artnet;
 
@@ -123,9 +123,11 @@ fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event:
     model.egui.handle_raw_event(event);
 }
 
-// ---------------- Set up Model with defaults
+// ---------------- Set up Model with defaults, some overridden by command-line args
 
 fn model(app: &App) -> Model {
+    let cli = Cli::parse();
+
     let window_id = app
         .new_window()
         .size(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H)
@@ -139,9 +141,7 @@ fn model(app: &App) -> Model {
     let window = app.window(window_id).unwrap();
     let egui = Egui::from_window(&window);
 
-    let mut tether = TetherConnection::new();
-    tether.connect();
-    Model::defaults(window_id, egui, tether)
+    Model::defaults(window_id, egui, &cli)
 }
 
 // ---------------- Update before drawing every frame

@@ -1,6 +1,7 @@
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::Duration;
 
+use clap::Parser;
 use nannou::prelude::*;
 use nannou_egui::egui::{self, ComboBox, Slider};
 use nannou_egui::Egui;
@@ -9,7 +10,7 @@ use tween::*;
 use crate::artnet::{ArtNetInterface, ArtNetMode};
 use crate::particles::build_layout;
 use crate::particles::Particle;
-use crate::tether::TetherConnection;
+use crate::tether::TetherAgent;
 
 use std::string::ToString;
 use strum::IntoEnumIterator;
@@ -28,6 +29,34 @@ const DEFAULT_SHOW_B_INDICATOR: bool = true;
 
 pub const DEFAULT_WIDTH_RATIO: f32 = 0.6;
 pub const DEFAULT_HEIGHT_RATIO: f32 = 0.2;
+
+const TETHER_HOST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+const UNICAST_SRC: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 102));
+const UNICAST_DST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1));
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+pub struct Cli {
+    /// Whether to disable Tether connection
+    #[arg(long = "tether.disable")]
+    tether_disable: bool,
+
+    /// The IP address of the Tether MQTT broker (server)
+    #[arg(long = "tether.host", default_value_t=TETHER_HOST)]
+    pub tether_host: std::net::IpAddr,
+
+    /// Whether to enable ArtNet broadcast mode (good for development)
+    #[arg(long = "artnet.broadcast")]
+    artnet_broadcast: bool,
+
+    /// IP address for ArtNet source interface (ignored if broadcast enabled)
+    #[arg(long = "artnet.interface", default_value_t=UNICAST_SRC)]
+    pub unicast_src: std::net::IpAddr,
+
+    /// IP address for ArtNet destination node (ignored if broadcast enabled)
+    #[arg(long = "artnet.destination", default_value_t=UNICAST_DST)]
+    pub unicast_dst: std::net::IpAddr,
+}
 
 pub struct PhaseSettings {
     pub duration: usize,
@@ -56,11 +85,16 @@ pub struct Model {
     pub egui: Egui,
     pub settings: Settings,
     pub artnet: ArtNetInterface,
-    pub tether: TetherConnection,
+    pub tether: TetherAgent,
 }
 
 impl Model {
-    pub fn defaults(window_id: WindowId, egui: Egui, tether: TetherConnection) -> Self {
+    pub fn defaults(window_id: WindowId, egui: Egui, cli: &Cli) -> Self {
+        let mut tether = TetherAgent::new(cli.tether_host);
+        if !cli.tether_disable {
+            tether.connect();
+        }
+
         Model {
             window_id,
             particles: build_layout(
@@ -88,15 +122,16 @@ impl Model {
                 show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
             },
             egui,
-            artnet: ArtNetInterface::new(ArtNetMode::Broadcast),
-            // artnet: ArtNetInterface::new(ArtNetMode::UnicastAllInterfaces(SocketAddr::from((
-            //     [10, 0, 0, 1],
-            //     6454,
-            // )))),
-            // artnet: ArtNetInterface::new(ArtNetMode::UnicastSpecifyInterface(
-            //     SocketAddr::from(([10, 0, 0, 102], 6454)),
-            //     SocketAddr::from(([10, 0, 0, 1], 6454)),
-            // )),
+            artnet: {
+                if cli.artnet_broadcast {
+                    ArtNetInterface::new(ArtNetMode::Broadcast)
+                } else {
+                    ArtNetInterface::new(ArtNetMode::Unicast(
+                        SocketAddr::from((cli.unicast_src, 6454)),
+                        SocketAddr::from((cli.unicast_dst, 6454)),
+                    ))
+                }
+            },
             tether,
         }
     }

@@ -11,10 +11,8 @@ pub struct ArtNetInterface {
 
 pub enum ArtNetMode {
     Broadcast,
-    /// Specify destination address only
-    UnicastAllInterfaces(SocketAddr),
     /// Specify from (interface) + to (destination) addresses
-    UnicastSpecifyInterface(SocketAddr, SocketAddr),
+    Unicast(SocketAddr, SocketAddr),
 }
 
 impl ArtNetInterface {
@@ -33,15 +31,7 @@ impl ArtNetInterface {
                     destination: broadcast_addr,
                 }
             }
-            ArtNetMode::UnicastAllInterfaces(destination) => {
-                let socket = UdpSocket::bind((String::from("0.0.0.0"), 6455)).unwrap();
-                socket.set_broadcast(false).unwrap();
-                ArtNetInterface {
-                    socket,
-                    destination,
-                }
-            }
-            ArtNetMode::UnicastSpecifyInterface(src, destination) => {
+            ArtNetMode::Unicast(src, destination) => {
                 let socket = UdpSocket::bind(src).unwrap();
 
                 socket.set_broadcast(false).unwrap();

@@ -1,19 +1,12 @@
-use std::{
-    net::{IpAddr, Ipv4Addr},
-    process,
-    time::Duration,
-};
+use std::{net::IpAddr, process, time::Duration};
 
-use futures::executor::block_on;
-use mqtt::{AsyncClient, Client, Message, Receiver};
+use mqtt::{Client, Message, Receiver};
 use paho_mqtt as mqtt;
 use serde::Deserialize;
 
 const INPUT_TOPIC: &str = "+/+/lightTriggers";
 
-const TETHER_HOST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-
-pub struct TetherConnection {
+pub struct TetherAgent {
     client: Client,
     receiver: Receiver<Option<Message>>,
 }
@@ -23,15 +16,14 @@ struct LightTriggerMessage {
     id: usize,
 }
 
-impl TetherConnection {
+impl TetherAgent {
     pub fn is_connected(&self) -> bool {
         self.client.is_connected()
     }
 
-    pub fn new() -> Self {
-        let broker_uri = format!("tcp://{}:1883", TETHER_HOST);
+    pub fn new(tether_host: IpAddr) -> Self {
+        let broker_uri = format!("tcp://{}:1883", tether_host);
 
-        println!("Connecting to Tether @ {} ...", broker_uri);
         let create_opts = mqtt::CreateOptionsBuilder::new()
             .server_uri(broker_uri)
             .client_id("")
@@ -40,14 +32,13 @@ impl TetherConnection {
         // Create the client connection
         let client = mqtt::Client::new(create_opts).unwrap();
 
+        // Initialize the consumer before connecting
         let receiver = client.start_consuming();
 
-        TetherConnection { client, receiver }
+        TetherAgent { client, receiver }
     }
 
     pub fn connect(&mut self) {
-        // Initialize the consumer before connecting
-
         let conn_opts = mqtt::ConnectOptionsBuilder::new()
             .user_name("tether")
             .password("sp_ceB0ss!")
@@ -95,27 +86,5 @@ impl TetherConnection {
         } else {
             None
         }
-
-        // for msg in self.receiver.try_iter() {
-        //     // iter() blocks, try_iter() does not
-        //     if let Some(msg) = msg {
-        //         // println!("MQTT received: {}", msg);
-        //         let payload = msg.payload().to_vec();
-        //         let light_message: Result<LightTriggerMessage, rmp_serde::decode::Error> =
-        //             rmp_serde::from_slice(&payload);
-        //         match light_message {
-        //             Ok(parsed) => {
-        //                 println!("Parsed LightTriggerMessage: {:?}", parsed);
-        //                 // Some(parsed.id)
-        //             }
-        //             Err(e) => {
-        //                 println!("Error parsing LightTriggerMessage: {:?}", e);
-        //                 // None
-        //             }
-        //         }
-        //     } else {
-        //         // None
-        //     }
-        // }
     }
 }
