@@ -2,6 +2,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::Duration;
 
 use clap::Parser;
+use log::warn;
 use nannou::prelude::*;
 use nannou_egui::egui::{self, ComboBox, Slider};
 use nannou_egui::Egui;
@@ -37,13 +38,16 @@ const UNICAST_DST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1));
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
+    #[arg(long = "loglevel",default_value_t=String::from("info"))]
+    pub log_level: String,
+
     /// Whether to disable Tether connection
     #[arg(long = "tether.disable")]
     tether_disable: bool,
 
     /// The IP address of the Tether MQTT broker (server)
     #[arg(long = "tether.host", default_value_t=TETHER_HOST)]
-    pub tether_host: std::net::IpAddr,
+    tether_host: std::net::IpAddr,
 
     /// Whether to enable ArtNet broadcast mode (good for development)
     #[arg(long = "artnet.broadcast")]
@@ -93,6 +97,8 @@ impl Model {
         let mut tether = TetherAgent::new(cli.tether_host);
         if !cli.tether_disable {
             tether.connect();
+        } else {
+            warn!("Tether connection disabled")
         }
 
         Model {

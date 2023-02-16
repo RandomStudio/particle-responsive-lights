@@ -1,5 +1,6 @@
 use std::{net::IpAddr, process, time::Duration};
 
+use log::{debug, error, info};
 use mqtt::{Client, Message, Receiver};
 use paho_mqtt as mqtt;
 use serde::Deserialize;
@@ -48,21 +49,21 @@ impl TetherAgent {
             .finalize();
 
         // Make the connection to the broker
-        println!("Connecting to the MQTT server...");
+        info!("Connecting to the MQTT server...");
         match self.client.connect(conn_opts) {
             Ok(res) => {
-                println!("Connected OK: {res:?}");
+                info!("Connected OK: {res:?}");
                 match self.client.subscribe(INPUT_TOPIC, 2) {
                     Ok(res) => {
-                        println!("Subscribe OK: {res:?}");
+                        debug!("Subscribe OK: {res:?}");
                     }
                     Err(e) => {
-                        println!("Error subscribing: {e:?}");
+                        error!("Error subscribing: {e:?}");
                     }
                 }
             }
             Err(e) => {
-                println!("Error connecting to the broker: {e:?}");
+                error!("Error connecting to the broker: {e:?}");
                 process::exit(1);
             }
         }
@@ -75,11 +76,11 @@ impl TetherAgent {
                 rmp_serde::from_slice(&payload);
             match light_message {
                 Ok(parsed) => {
-                    println!("Parsed LightTriggerMessage: {parsed:?}");
+                    info!("Parsed LightTriggerMessage: {parsed:?}");
                     Some(parsed.id)
                 }
                 Err(e) => {
-                    println!("Error parsing LightTriggerMessage: {e:?}");
+                    error!("Error parsing LightTriggerMessage: {e:?}");
                     None
                 }
             }

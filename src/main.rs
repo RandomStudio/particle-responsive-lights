@@ -1,4 +1,6 @@
 use clap::Parser;
+use env_logger::{Builder, Env};
+use log::{debug, info};
 use nannou::prelude::*;
 use nannou_egui::Egui;
 use settings::{build_ui, Cli, EaseStyle, PhaseSettings, DEFAULT_WINDOW_H, DEFAULT_WINDOW_W};
@@ -18,15 +20,13 @@ mod artnet;
 mod tether;
 
 fn main() {
-    println!("Started");
-
     nannou::app(model).update(update).run();
 }
 
 // ---------------- Event Handlers
 
 fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
-    println!("mouse pressed at position {}", model.mouse_position);
+    debug!("mouse pressed at position {}", model.mouse_position);
     let PhaseSettings { duration, style } = &model.settings.attack_settings;
     let TransmissionSettings {
         max_range,
@@ -60,14 +60,14 @@ fn trigger_activation(
 ) {
     for p in particles {
         if p.id == main_target_id {
-            activate_main(p, duration, style, p.brightness, 1.0, 0);
+            activate_single(p, duration, style, p.brightness, 1.0, 0);
         } else {
             let distance = main_target_position.distance(p.position);
             if distance <= max_range {
                 if let Some(new_brightness_target) =
                     possibly_activate_by_transmission(p, distance, max_range)
                 {
-                    activate_main(
+                    activate_single(
                         p,
                         duration,
                         style,
@@ -81,7 +81,7 @@ fn trigger_activation(
     }
 }
 
-fn activate_main(
+fn activate_single(
     p: &mut Particle,
     duration: usize,
     ease_style: &EaseStyle,
@@ -97,7 +97,7 @@ fn activate_main(
     );
     attack.set_elapsed(-delay);
     p.animation = EnvelopeStage::AttackAnimation(attack);
-    println!("#{} activate", p.id);
+    debug!("#{} activate", p.id);
 }
 
 fn possibly_activate_by_transmission(
@@ -127,6 +127,18 @@ fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event:
 
 fn model(app: &App) -> Model {
     let cli = Cli::parse();
+
+    // Initialize the logger from the environment
+    // env_logger::Builder::from_env(Env::default().default_filter_or(&cli.log_level)).init();
+    // env_logger::init();
+
+    let mut builder = Builder::from_env(Env::default().default_filter_or(&cli.log_level));
+    builder.filter_module("wgpu_core", log::LevelFilter::Warn);
+    builder.filter_module("wgpu_hal", log::LevelFilter::Warn);
+    builder.filter_module("naga", log::LevelFilter::Warn);
+    builder.init();
+    info!("Started; args: {:?}", cli);
+    debug!("Debugging is enabled; could be verbose");
 
     let window_id = app
         .new_window()
@@ -173,7 +185,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                 let (brightness, done) = a.get_brightness_and_done(delta_time);
                 p.brightness = brightness;
                 if done {
-                    println!("#{} end Attack => Release", p.id);
+                    debug!("#{} end Attack => Release", p.id);
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
                         model.settings.release_settings.duration,
                         p.brightness,
@@ -186,7 +198,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                 let (brightness, done) = a.get_brightness_and_done(delta_time);
                 p.brightness = brightness;
                 if done {
-                    println!("#{} end Release => Idle", p.id);
+                    debug!("#{} end Release => Idle", p.id);
                     p.animation = EnvelopeStage::Idle()
                 }
             }
