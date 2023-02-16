@@ -64,6 +64,7 @@ impl ArtNetInterface {
         }
 
         let command = ArtCommand::Output(Output {
+            port_address: 0.into(),
             data: channels.into(),
             ..Output::default()
         });
