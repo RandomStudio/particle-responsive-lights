@@ -44,7 +44,7 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
         let id = target_particle.id;
         let position = target_particle.position;
         trigger_activation(
-            particles, id, position, *duration, *max_range, *max_delay, &style,
+            particles, id, position, *duration, *max_range, *max_delay, style,
         );
     }
 }
@@ -208,7 +208,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                 let position = target_particle.position;
                 let id = target_particle.id;
                 trigger_activation(
-                    particles, id, position, *duration, *max_range, *max_delay, &style,
+                    particles, id, position, *duration, *max_range, *max_delay, style,
                 );
             }
         }

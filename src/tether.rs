@@ -22,7 +22,7 @@ impl TetherAgent {
     }
 
     pub fn new(tether_host: IpAddr) -> Self {
-        let broker_uri = format!("tcp://{}:1883", tether_host);
+        let broker_uri = format!("tcp://{tether_host}:1883");
 
         let create_opts = mqtt::CreateOptionsBuilder::new()
             .server_uri(broker_uri)
@@ -51,18 +51,18 @@ impl TetherAgent {
         println!("Connecting to the MQTT server...");
         match self.client.connect(conn_opts) {
             Ok(res) => {
-                println!("Connected OK: {:?}", res);
+                println!("Connected OK: {res:?}");
                 match self.client.subscribe(INPUT_TOPIC, 2) {
                     Ok(res) => {
-                        println!("Subscribe OK: {:?}", res);
+                        println!("Subscribe OK: {res:?}");
                     }
                     Err(e) => {
-                        println!("Error subscribing: {:?}", e);
+                        println!("Error subscribing: {e:?}");
                     }
                 }
             }
             Err(e) => {
-                println!("Error connecting to the broker: {:?}", e);
+                println!("Error connecting to the broker: {e:?}");
                 process::exit(1);
             }
         }
@@ -75,11 +75,11 @@ impl TetherAgent {
                 rmp_serde::from_slice(&payload);
             match light_message {
                 Ok(parsed) => {
-                    println!("Parsed LightTriggerMessage: {:?}", parsed);
+                    println!("Parsed LightTriggerMessage: {parsed:?}");
                     Some(parsed.id)
                 }
                 Err(e) => {
-                    println!("Error parsing LightTriggerMessage: {:?}", e);
+                    println!("Error parsing LightTriggerMessage: {e:?}");
                     None
                 }
             }
