@@ -49,7 +49,9 @@ impl ArtNetInterface {
 
         for p in particles {
             for _i in 0..channels_per_fixture {
-                channels.push(map_range(p.brightness, 0., 1., 0., 255.).to_u8().unwrap());
+                if let Some(brightness) = map_range(p.brightness(), 0., 1., 0., 255.).to_u8() {
+                    channels.push(brightness);
+                }
             }
         }
 

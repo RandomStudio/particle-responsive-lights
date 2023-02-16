@@ -5,7 +5,7 @@ use crate::animation::EnvelopeStage;
 pub struct Particle {
     pub id: usize,
     pub position: Point2,
-    pub brightness: f32,
+    brightness: f32,
     pub animation: EnvelopeStage,
 }
 
@@ -17,6 +17,12 @@ impl Particle {
             brightness: 0.,
             animation: EnvelopeStage::Idle(),
         }
+    }
+    pub fn brightness(&self) -> f32 {
+        self.brightness.clamp(0., 1.0)
+    }
+    pub fn set_brightness(&mut self, new_value: f32) {
+        self.brightness = new_value;
     }
 }
 

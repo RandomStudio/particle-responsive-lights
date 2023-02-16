@@ -60,7 +60,7 @@ fn trigger_activation(
 ) {
     for p in particles {
         if p.id == main_target_id {
-            activate_single(p, duration, style, p.brightness, 1.0, 0);
+            activate_single(p, duration, style, p.brightness(), 1.0, 0);
         } else {
             let distance = main_target_position.distance(p.position);
             if distance <= max_range {
@@ -71,7 +71,7 @@ fn trigger_activation(
                         p,
                         duration,
                         style,
-                        p.brightness,
+                        p.brightness(),
                         new_brightness_target,
                         map_range(distance, 0., max_range, 0, max_delay),
                     )
@@ -105,7 +105,7 @@ fn possibly_activate_by_transmission(
     distance: f32,
     max_range: f32,
 ) -> Option<f32> {
-    let current_brightness = p.brightness;
+    let current_brightness = p.brightness();
     let target_brightness = map_range(distance, 0., max_range, 1., 0.0);
     if target_brightness > current_brightness {
         Some(target_brightness)
@@ -183,12 +183,12 @@ fn update(app: &App, model: &mut Model, update: Update) {
         match animation {
             EnvelopeStage::AttackAnimation(a) => {
                 let (brightness, done) = a.get_brightness_and_done(delta_time);
-                p.brightness = brightness;
+                p.set_brightness(brightness);
                 if done {
                     debug!("#{} end Attack => Release", p.id);
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
                         model.settings.release_settings.duration,
-                        p.brightness,
+                        p.brightness(),
                         0.,
                         get_tween(&model.settings.release_settings.style),
                     ))
@@ -196,7 +196,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
             }
             EnvelopeStage::ReleaseAnimation(a) => {
                 let (brightness, done) = a.get_brightness_and_done(delta_time);
-                p.brightness = brightness;
+                p.set_brightness(brightness);
                 if done {
                     debug!("#{} end Release => Idle", p.id);
                     p.animation = EnvelopeStage::Idle()
@@ -239,7 +239,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
             .rect()
             .w_h(model.settings.chime_thickness, model.settings.chime_length)
             .x_y(p.position.x, p.position.y)
-            .color(gray(p.brightness));
+            .color(gray(p.brightness()));
 
         if model.settings.show_brightness_indicator {
             let size = model.settings.chime_length / 2.;
@@ -247,7 +247,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
                 .w_h(model.settings.chime_thickness * 1.25, 2.)
                 .x_y(
                     p.position.x,
-                    p.position.y + map_range(p.brightness, 0., 1., size, -size),
+                    p.position.y + map_range(p.brightness(), 0., 1., size, -size),
                 )
                 .color(WHITE);
         }
