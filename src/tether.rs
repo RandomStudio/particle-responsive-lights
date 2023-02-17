@@ -13,8 +13,10 @@ pub struct TetherAgent {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct LightTriggerMessage {
     id: usize,
+    target_brightness: f32,
 }
 
 impl TetherAgent {
@@ -69,7 +71,7 @@ impl TetherAgent {
         }
     }
 
-    pub fn check_messages(&self) -> Option<usize> {
+    pub fn check_messages(&self) -> Option<(usize, f32)> {
         if let Some(m) = self.receiver.try_iter().find_map(|m| m) {
             let payload = m.payload().to_vec();
             let light_message: Result<LightTriggerMessage, rmp_serde::decode::Error> =
@@ -77,7 +79,7 @@ impl TetherAgent {
             match light_message {
                 Ok(parsed) => {
                     info!("Parsed LightTriggerMessage: {parsed:?}");
-                    Some(parsed.id)
+                    Some((parsed.id, parsed.target_brightness))
                 }
                 Err(e) => {
                     error!("Error parsing LightTriggerMessage: {e:?}");

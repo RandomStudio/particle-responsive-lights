@@ -44,7 +44,7 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
         let id = target_particle.id;
         let position = target_particle.position;
         trigger_activation(
-            particles, id, position, *duration, *max_range, *max_delay, style,
+            particles, id, position, 1.0, *duration, *max_range, *max_delay, style,
         );
     }
 }
@@ -53,6 +53,7 @@ fn trigger_activation(
     particles: &mut Vec<Particle>,
     main_target_id: usize,
     main_target_position: Point2,
+    brightness: f32,
     duration: usize,
     max_range: f32,
     max_delay: i64,
@@ -60,7 +61,7 @@ fn trigger_activation(
 ) {
     for p in particles {
         if p.id == main_target_id {
-            activate_single(p, duration, style, p.brightness(), 1.0, 0);
+            activate_single(p, duration, style, p.brightness(), brightness, 0);
         } else {
             let distance = main_target_position.distance(p.position);
             if distance <= max_range {
@@ -215,12 +216,19 @@ fn update(app: &App, model: &mut Model, update: Update) {
             max_delay,
         } = &model.settings.transmission_settings;
         let particles = &mut model.particles;
-        if let Some(id) = model.tether.check_messages() {
+        if let Some((id, target_brightness)) = model.tether.check_messages() {
             if let Some(target_particle) = particles.iter().find(|p| p.id == id) {
                 let position = target_particle.position;
                 let id = target_particle.id;
                 trigger_activation(
-                    particles, id, position, *duration, *max_range, *max_delay, style,
+                    particles,
+                    id,
+                    position,
+                    target_brightness,
+                    *duration,
+                    *max_range,
+                    *max_delay,
+                    style,
                 );
             }
         }
