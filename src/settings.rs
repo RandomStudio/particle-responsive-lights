@@ -80,6 +80,7 @@ pub struct Settings {
     pub attack_settings: PhaseSettings,
     pub release_settings: PhaseSettings,
     pub transmission_settings: TransmissionSettings,
+    pub trigger_full_brightness: bool,
 }
 
 pub struct Model {
@@ -126,6 +127,7 @@ impl Model {
                     max_delay: 1000,
                 },
                 show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
+                trigger_full_brightness: true,
             },
             egui,
             artnet: {
@@ -214,6 +216,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             attack_settings,
             release_settings,
             transmission_settings,
+            trigger_full_brightness,
             ..
         } = &mut model.settings;
 
@@ -298,5 +301,12 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             ui.label("Transmission max delay");
             ui.add(Slider::new(max_delay, 0..=4000).suffix("ms"))
         });
+
+        ui.separator();
+
+        ui.checkbox(
+            trigger_full_brightness,
+            "Remote trigger max brightness always",
+        );
     });
 }

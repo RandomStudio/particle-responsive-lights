@@ -220,11 +220,18 @@ fn update(app: &App, model: &mut Model, update: Update) {
             if let Some(target_particle) = particles.iter().find(|p| p.id == id) {
                 let position = target_particle.position;
                 let id = target_particle.id;
+                let trigger_brightness = {
+                    if model.settings.trigger_full_brightness {
+                        1.
+                    } else {
+                        target_brightness
+                    }
+                };
                 trigger_activation(
                     particles,
                     id,
                     position,
-                    target_brightness,
+                    trigger_brightness,
                     *duration,
                     *max_range,
                     *max_delay,
