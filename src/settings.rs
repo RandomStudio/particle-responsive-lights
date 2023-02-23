@@ -30,9 +30,12 @@ const DEFAULT_THICKNESS: f32 = 15.;
 const DEFAULT_LENGTH: f32 = 250.;
 const DEFAULT_ATTACK_DURATION: usize = 200;
 const DEFAULT_RELEASE_DURATION: usize = 1000;
+
 const DEFAULT_SHOW_B_INDICATOR: bool = true;
 const DEFAULT_SHOW_INDEX: bool = true;
+
 const DEFAULT_TRIGGER_FULL: bool = false;
+const DEFAULT_TRIGGER_BY_ORDER: bool = true;
 
 pub const DEFAULT_WIDTH_RATIO: f32 = 0.6;
 pub const DEFAULT_HEIGHT_RATIO: f32 = 0.2;
@@ -91,6 +94,7 @@ pub struct Settings {
     pub release_settings: PhaseSettings,
     pub transmission_settings: TransmissionSettings,
     pub trigger_full_brightness: bool,
+    pub trigger_by_order: bool,
 }
 
 pub struct Model {
@@ -139,6 +143,7 @@ impl Model {
                 show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
                 show_chime_index: DEFAULT_SHOW_INDEX,
                 trigger_full_brightness: DEFAULT_TRIGGER_FULL,
+                trigger_by_order: DEFAULT_TRIGGER_BY_ORDER,
             },
             egui,
             artnet: {
@@ -228,6 +233,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             release_settings,
             transmission_settings,
             trigger_full_brightness,
+            trigger_by_order,
             ..
         } = &mut model.settings;
 
@@ -319,5 +325,6 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             trigger_full_brightness,
             "Remote trigger max brightness always",
         );
+        ui.checkbox(trigger_by_order, "Remote trigger by order not #ID");
     });
 }

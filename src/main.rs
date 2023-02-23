@@ -142,7 +142,7 @@ fn model(app: &App) -> Model {
     // env_logger::init();
 
     let mut builder = Builder::from_env(Env::default().default_filter_or(&cli.log_level));
-    builder.filter_module("wgpu_core", log::LevelFilter::Warn);
+    builder.filter_module("wgpu_core", log::LevelFilter::Error);
     builder.filter_module("wgpu_hal", log::LevelFilter::Warn);
     builder.filter_module("naga", log::LevelFilter::Warn);
     builder.init();
@@ -223,9 +223,18 @@ fn update(app: &App, model: &mut Model, update: Update) {
             max_range,
             max_delay,
         } = &model.settings.transmission_settings;
+        let trigger_by_order = model.settings.trigger_by_order;
         let particles = &mut model.particles;
-        if let Some((id, target_brightness)) = model.tether.check_messages() {
-            if let Some(target_particle) = particles.iter().find(|p| p.id == id) {
+        if let Some((order_id, target_brightness)) = model.tether.check_messages() {
+            if let Some(target_particle) = particles.iter().find(|p| {
+                order_id == {
+                    if trigger_by_order {
+                        p.order
+                    } else {
+                        p.id
+                    }
+                }
+            }) {
                 let position = target_particle.position;
                 let id = target_particle.id;
                 let trigger_brightness = {
@@ -276,7 +285,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
         }
         if model.settings.show_chime_index {
             let size = model.settings.chime_length / 2.;
-            let text: &str = &format!("#{}", p.id);
+            let text: &str = &format!("#{} ({})", p.id, p.order);
             draw.text(text)
                 .color(GREY)
                 .x_y(p.position.x, p.position.y + size * 1.1);

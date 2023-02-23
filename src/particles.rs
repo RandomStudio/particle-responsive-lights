@@ -4,15 +4,17 @@ use crate::{animation::EnvelopeStage, settings::DEFAULT_ORDER};
 
 pub struct Particle {
     pub id: usize,
+    pub order: usize,
     pub position: Point2,
     brightness: f32,
     pub animation: EnvelopeStage,
 }
 
 impl Particle {
-    fn new(id: usize, position: Point2) -> Self {
+    fn new(id: usize, order: usize, position: Point2) -> Self {
         Particle {
             id,
+            order,
             position,
             brightness: 0.,
             animation: EnvelopeStage::Idle(),
@@ -31,12 +33,14 @@ pub fn build_layout(count: usize, width_range: f32, height_range: f32) -> Vec<Pa
     let start_position = Point2::new(-width_range / 2. + gap_x / 2., -height_range / 2.);
     let mut particles: Vec<Particle> = vec![];
     for i in 0..count {
+        let order_id = DEFAULT_ORDER[i];
         particles.push(Particle::new(
-            DEFAULT_ORDER[i],
+            i,
+            order_id,
             Point2::new(
-                start_position.x + gap_x * i.to_f32().unwrap(),
+                start_position.x + gap_x * order_id.to_f32().unwrap(),
                 map_range(
-                    i.to_f32().unwrap().sin(),
+                    order_id.to_f32().unwrap().sin(),
                     -1.,
                     1.,
                     -height_range / 2.,
@@ -45,6 +49,6 @@ pub fn build_layout(count: usize, width_range: f32, height_range: f32) -> Vec<Pa
             ),
         ))
     }
-    particles.sort_by_key(|p| p.id);
+    particles.sort_by_key(|p| p.order);
     particles
 }
