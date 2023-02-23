@@ -18,8 +18,8 @@ use strum::IntoEnumIterator;
 use strum_macros::Display;
 use strum_macros::EnumIter;
 
-pub const DEFAULT_WINDOW_W: u32 = 1920;
-pub const DEFAULT_WINDOW_H: u32 = 720;
+pub const DEFAULT_WINDOW_W: u32 = 1280;
+pub const DEFAULT_WINDOW_H: u32 = 600;
 
 const DEFAULT_COUNT: usize = 14;
 const DEFAULT_THICKNESS: f32 = 15.;
@@ -30,6 +30,9 @@ const DEFAULT_SHOW_B_INDICATOR: bool = true;
 
 pub const DEFAULT_WIDTH_RATIO: f32 = 0.6;
 pub const DEFAULT_HEIGHT_RATIO: f32 = 0.2;
+
+const DEFAULT_TRANSMISSION_RANGE: f32 = 0.15;
+const DEFAULT_TRANSMISSION_DELAY: i64 = 500;
 
 const TETHER_HOST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const UNICAST_SRC: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 102));
@@ -123,11 +126,11 @@ impl Model {
                     style: EaseStyle::BounceIn,
                 },
                 transmission_settings: TransmissionSettings {
-                    max_range: DEFAULT_WINDOW_W.to_f32() * 0.2,
-                    max_delay: 1000,
+                    max_range: DEFAULT_TRANSMISSION_RANGE,
+                    max_delay: DEFAULT_TRANSMISSION_DELAY,
                 },
                 show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
-                trigger_full_brightness: true,
+                trigger_full_brightness: false,
             },
             egui,
             artnet: {
@@ -293,8 +296,8 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
         } = transmission_settings;
 
         ui.horizontal(|ui| {
-            ui.label("Transmission range");
-            ui.add(Slider::new(max_range, 0. ..=1000.).suffix("px"));
+            ui.label("Transmission range factor");
+            ui.add(Slider::new(max_range, 0. ..=1.).suffix("x"));
         });
 
         ui.horizontal(|ui| {

@@ -43,8 +43,16 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
     }) {
         let id = target_particle.id;
         let position = target_particle.position;
+        let max_range_pixels = *max_range * DEFAULT_WINDOW_W.to_f32().unwrap();
         trigger_activation(
-            particles, id, position, 1.0, *duration, *max_range, *max_delay, style,
+            particles,
+            id,
+            position,
+            1.0,
+            *duration,
+            max_range_pixels,
+            *max_delay,
+            style,
         );
     }
 }
