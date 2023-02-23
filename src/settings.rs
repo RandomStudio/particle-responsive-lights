@@ -23,12 +23,13 @@ pub const DEFAULT_WINDOW_H: u32 = 600;
 
 const DEFAULT_COUNT: usize = 14;
 // TODO: this should be not be hard-coded
-pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [6, 7, 8, 9, 10, 11, 12, 13, 0, 1, 2, 3, 4, 5];
+// pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [8, 9, 7, 6, 10, 11, 13, 1, 5, 12, 0, 4, 2, 3];
 
 const DEFAULT_THICKNESS: f32 = 15.;
 const DEFAULT_LENGTH: f32 = 250.;
-const DEFAULT_ATTACK_DURATION: usize = 300;
-const DEFAULT_RELEASE_DURATION: usize = 2500;
+const DEFAULT_ATTACK_DURATION: usize = 200;
+const DEFAULT_RELEASE_DURATION: usize = 1000;
 const DEFAULT_SHOW_B_INDICATOR: bool = true;
 const DEFAULT_SHOW_INDEX: bool = true;
 const DEFAULT_TRIGGER_FULL: bool = false;
