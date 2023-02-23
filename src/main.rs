@@ -244,13 +244,15 @@ fn update(app: &App, model: &mut Model, update: Update) {
                         target_brightness
                     }
                 };
+                let max_range_pixels = *max_range * DEFAULT_WINDOW_W.to_f32().unwrap();
+
                 trigger_activation(
                     particles,
                     id,
                     position,
                     trigger_brightness,
                     *duration,
-                    *max_range,
+                    max_range_pixels,
                     *max_delay,
                     style,
                 );

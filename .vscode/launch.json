@@ -19,7 +19,7 @@
           "kind": "bin"
         }
       },
-      "args": ["--artnet.broadcast"],
+      "args": ["--artnet.interface=10.0.0.102"],
       "cwd": "${workspaceFolder}"
     },
     {
