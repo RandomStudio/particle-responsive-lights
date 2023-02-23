@@ -3,6 +3,8 @@
 Each chime is a "particle" in this system.
 
 ## Development setup
+Paho Eclipse MQTT is actually a C library, so it has some dependencies. On Mac, `brew install openssh` and `brew install cmake` if necessary.
+
 - Clone the repo
 - Run `cargo run`
 
