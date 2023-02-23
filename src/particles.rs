@@ -49,6 +49,6 @@ pub fn build_layout(count: usize, width_range: f32, height_range: f32) -> Vec<Pa
             ),
         ))
     }
-    particles.sort_by_key(|p| p.order);
+    particles.sort_by_key(|p| p.id);
     particles
 }

@@ -22,7 +22,7 @@ pub const DEFAULT_WINDOW_W: u32 = 1280;
 pub const DEFAULT_WINDOW_H: u32 = 600;
 
 const DEFAULT_COUNT: usize = 14;
-// TODO: this should be not be hard-coded
+// TODO: this should be not be hard-coded; maybe a string => hashmap, length checked at runtime?
 // pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [8, 9, 7, 6, 10, 11, 13, 1, 5, 12, 0, 4, 2, 3];
 
