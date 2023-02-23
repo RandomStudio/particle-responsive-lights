@@ -22,11 +22,16 @@ pub const DEFAULT_WINDOW_W: u32 = 1280;
 pub const DEFAULT_WINDOW_H: u32 = 600;
 
 const DEFAULT_COUNT: usize = 14;
+// TODO: this should be not be hard-coded
+pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [6, 7, 8, 9, 10, 11, 12, 13, 0, 1, 2, 3, 4, 5];
+
 const DEFAULT_THICKNESS: f32 = 15.;
 const DEFAULT_LENGTH: f32 = 250.;
 const DEFAULT_ATTACK_DURATION: usize = 300;
 const DEFAULT_RELEASE_DURATION: usize = 2500;
 const DEFAULT_SHOW_B_INDICATOR: bool = true;
+const DEFAULT_SHOW_INDEX: bool = true;
+const DEFAULT_TRIGGER_FULL: bool = false;
 
 pub const DEFAULT_WIDTH_RATIO: f32 = 0.6;
 pub const DEFAULT_HEIGHT_RATIO: f32 = 0.2;
@@ -78,6 +83,7 @@ pub struct TransmissionSettings {
 pub struct Settings {
     pub chimes_count: usize,
     pub show_brightness_indicator: bool,
+    pub show_chime_index: bool,
     pub chime_thickness: f32,
     pub chime_length: f32,
     pub attack_settings: PhaseSettings,
@@ -130,7 +136,8 @@ impl Model {
                     max_delay: DEFAULT_TRANSMISSION_DELAY,
                 },
                 show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
-                trigger_full_brightness: false,
+                show_chime_index: DEFAULT_SHOW_INDEX,
+                trigger_full_brightness: DEFAULT_TRIGGER_FULL,
             },
             egui,
             artnet: {

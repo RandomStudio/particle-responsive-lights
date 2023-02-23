@@ -1,6 +1,6 @@
 use nannou::prelude::{map_range, Point2, ToPrimitive};
 
-use crate::animation::EnvelopeStage;
+use crate::{animation::EnvelopeStage, settings::DEFAULT_ORDER};
 
 pub struct Particle {
     pub id: usize,
@@ -32,7 +32,7 @@ pub fn build_layout(count: usize, width_range: f32, height_range: f32) -> Vec<Pa
     let mut particles: Vec<Particle> = vec![];
     for i in 0..count {
         particles.push(Particle::new(
-            i,
+            DEFAULT_ORDER[i],
             Point2::new(
                 start_position.x + gap_x * i.to_f32().unwrap(),
                 map_range(

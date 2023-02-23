@@ -274,6 +274,13 @@ fn view(app: &App, model: &Model, frame: Frame) {
                 )
                 .color(WHITE);
         }
+        if model.settings.show_chime_index {
+            let size = model.settings.chime_length / 2.;
+            let text: &str = &format!("#{}", p.id);
+            draw.text(text)
+                .color(GREY)
+                .x_y(p.position.x, p.position.y + size * 1.1);
+        }
     }
 
     draw.to_frame(app, &frame).unwrap();
