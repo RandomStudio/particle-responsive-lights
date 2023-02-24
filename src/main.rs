@@ -332,13 +332,19 @@ fn view(app: &App, model: &Model, frame: Frame) {
                     p.position.x,
                     p.position.y + map_range(p.brightness(), 0., 1., size, -size),
                 )
-                .color(WHITE);
+                .color({
+                    match p.animation {
+                        EnvelopeStage::AttackAnimation(_, _) => GREEN,
+                        EnvelopeStage::ReleaseAnimation(_) => ORANGERED,
+                        EnvelopeStage::Idle() => WHITE,
+                    }
+                });
         }
         if model.settings.show_chime_index {
             let size = model.settings.chime_length / 2.;
             let text: &str = &format!("#{} ({})", p.id, p.order);
             draw.text(text)
-                .color(GREY)
+                .color(SLATEGREY)
                 .x_y(p.position.x, p.position.y + size * 1.1);
         }
     }
