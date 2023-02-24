@@ -113,8 +113,8 @@ impl Animation for Release {
 
 // The animation concept is based on https://en.wikipedia.org/wiki/Envelope_(music)
 pub enum EnvelopeStage {
-    // Active(Box<dyn Animated>),
-    AttackAnimation(Attack),
+    /// The Attack animation to play, followed by the duration of the Release that follows
+    AttackAnimation(Attack, usize),
     ReleaseAnimation(Release),
     Idle(),
 }

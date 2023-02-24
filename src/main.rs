@@ -27,7 +27,9 @@ fn main() {
 
 fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
     debug!("mouse pressed at position {}", model.mouse_position);
-    let PhaseSettings { duration, style } = &model.settings.attack_settings;
+    let PhaseSettings { style, .. } = &model.settings.attack_settings;
+    let attack_duration = model.settings.attack_settings.duration;
+    let release_duration = model.settings.release_settings.duration;
     let TransmissionSettings {
         max_range,
         max_delay,
@@ -49,7 +51,8 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
             id,
             position,
             1.0,
-            *duration,
+            attack_duration,
+            release_duration,
             max_range_pixels,
             *max_delay,
             style,
@@ -62,14 +65,23 @@ fn trigger_activation(
     main_target_id: usize,
     main_target_position: Point2,
     brightness: f32,
-    duration: usize,
+    attack_duration: usize,
+    release_duration: usize,
     max_range: f32,
     max_delay: i64,
     style: &EaseStyle,
 ) {
     for p in particles {
         if p.id == main_target_id {
-            activate_single(p, duration, style, p.brightness(), brightness, 0);
+            activate_single(
+                p,
+                attack_duration,
+                release_duration,
+                style,
+                p.brightness(),
+                brightness,
+                0,
+            );
         } else {
             // let distance = main_target_position.distance(p.position);
             let distance = (main_target_position.x - p.position.x).abs();
@@ -79,7 +91,8 @@ fn trigger_activation(
                 {
                     activate_single(
                         p,
-                        duration,
+                        attack_duration,
+                        release_duration,
                         style,
                         p.brightness(),
                         new_brightness_target,
@@ -93,20 +106,21 @@ fn trigger_activation(
 
 fn activate_single(
     p: &mut Particle,
-    duration: usize,
+    attack_duration: usize,
+    release_duration: usize,
     ease_style: &EaseStyle,
     start_brightness: f32,
     target_brightness: f32,
     delay: i64,
 ) {
     let mut attack = Attack::new(
-        duration,
+        attack_duration,
         start_brightness,
         target_brightness,
         get_tween(ease_style),
     );
     attack.set_elapsed(-delay);
-    p.animation = EnvelopeStage::AttackAnimation(attack);
+    p.animation = EnvelopeStage::AttackAnimation(attack, release_duration);
     debug!(
         "#{} activate to target_brightness {}",
         p.id, target_brightness
@@ -195,17 +209,26 @@ fn update(app: &App, model: &mut Model, update: Update) {
         // let current_time = app.duration.since_start.as_millis();
 
         match animation {
-            EnvelopeStage::AttackAnimation(a) => {
+            EnvelopeStage::AttackAnimation(a, release_duration_after) => {
                 let (brightness, done) = a.get_brightness_and_done(delta_time);
-                p.set_brightness(brightness);
+                // p.set_brightness(brightness);
                 if done {
                     debug!("#{} end Attack => Release", p.id);
+                    let duration = {
+                        if *release_duration_after > 0 {
+                            *release_duration_after
+                        } else {
+                            model.settings.release_settings.duration
+                        }
+                    };
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
-                        model.settings.release_settings.duration,
+                        duration,
                         p.brightness(),
                         0.,
                         get_tween(&model.settings.release_settings.style),
                     ))
+                } else {
+                    p.set_brightness(brightness);
                 }
             }
             EnvelopeStage::ReleaseAnimation(a) => {
@@ -223,7 +246,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
     model.artnet.update(&model.particles);
 
     if model.tether.is_connected() {
-        let PhaseSettings { duration, style } = &model.settings.attack_settings;
+        let PhaseSettings { style, .. } = &model.settings.attack_settings;
         let TransmissionSettings {
             max_range,
             max_delay,
@@ -251,11 +274,19 @@ fn update(app: &App, model: &mut Model, update: Update) {
                 };
                 let max_range_pixels = *max_range * DEFAULT_WINDOW_W.to_f32().unwrap();
 
-                let duration = {
+                let attack_duration = {
                     if light_message.attack_duration > 0 {
                         light_message.attack_duration
                     } else {
-                        *duration
+                        model.settings.attack_settings.duration
+                    }
+                };
+
+                let release_duration = {
+                    if light_message.release_duration > 0 {
+                        light_message.release_duration
+                    } else {
+                        model.settings.release_settings.duration
                     }
                 };
 
@@ -264,7 +295,8 @@ fn update(app: &App, model: &mut Model, update: Update) {
                     id,
                     position,
                     trigger_brightness,
-                    duration,
+                    attack_duration,
+                    release_duration,
                     max_range_pixels,
                     *max_delay,
                     style,
