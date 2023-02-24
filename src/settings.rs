@@ -98,6 +98,7 @@ pub struct Settings {
     pub trigger_by_order: bool,
     pub mouse_enable: bool,
     pub mouse_brightness_value: f32,
+    pub resting_brightness: f32,
 }
 
 pub struct Model {
@@ -149,6 +150,7 @@ impl Model {
                 trigger_by_order: DEFAULT_TRIGGER_BY_ORDER,
                 mouse_enable: true,
                 mouse_brightness_value: 1.0,
+                resting_brightness: 0.,
             },
             egui,
             artnet: {
@@ -241,6 +243,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             trigger_by_order,
             mouse_enable,
             mouse_brightness_value,
+            resting_brightness,
             ..
         } = &mut model.settings;
 
@@ -317,6 +320,11 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
                         ui.selectable_value(style, named_style, n);
                     }
                 });
+
+            ui.horizontal(|ui| {
+                ui.label("Rest brightness after release:");
+                ui.add(Slider::new(resting_brightness, 0. ..=1.).suffix("x"));
+            });
 
             ui.separator();
 

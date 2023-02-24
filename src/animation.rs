@@ -111,10 +111,15 @@ impl Animation for Release {
     }
 }
 
+pub struct AfterAttack {
+    pub release_duration: usize,
+    pub final_brightness: f32,
+}
+
 // The animation concept is based on https://en.wikipedia.org/wiki/Envelope_(music)
 pub enum EnvelopeStage {
     /// The Attack animation to play, followed by the duration of the Release that follows
-    AttackAnimation(Attack, usize),
+    AttackAnimation(Attack, Option<AfterAttack>),
     ReleaseAnimation(Release),
     Idle(),
 }

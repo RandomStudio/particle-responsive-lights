@@ -55,6 +55,7 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
             id,
             position,
             model.settings.mouse_brightness_value,
+            model.settings.resting_brightness,
             attack_duration,
             release_duration,
             max_range_pixels,
@@ -69,6 +70,7 @@ fn trigger_activation(
     main_target_id: usize,
     main_target_position: Point2,
     brightness: f32,
+    final_brightness: f32,
     attack_duration: usize,
     release_duration: usize,
     max_range: f32,
@@ -84,6 +86,7 @@ fn trigger_activation(
                 style,
                 p.brightness(),
                 brightness,
+                final_brightness,
                 0,
             );
         } else {
@@ -100,6 +103,7 @@ fn trigger_activation(
                         style,
                         p.brightness(),
                         new_brightness_target,
+                        final_brightness,
                         map_range(distance, 0., max_range, 0, max_delay),
                     )
                 }
@@ -115,6 +119,7 @@ fn activate_single(
     ease_style: &EaseStyle,
     start_brightness: f32,
     target_brightness: f32,
+    final_brightness: f32,
     delay: i64,
 ) {
     let mut attack = Attack::new(
@@ -124,7 +129,13 @@ fn activate_single(
         get_tween(ease_style),
     );
     attack.set_elapsed(-delay);
-    p.animation = EnvelopeStage::AttackAnimation(attack, release_duration);
+    p.animation = EnvelopeStage::AttackAnimation(
+        attack,
+        Some(AfterAttack {
+            release_duration,
+            final_brightness,
+        }),
+    );
     debug!(
         "#{} activate to target_brightness {}",
         p.id, target_brightness
@@ -213,22 +224,22 @@ fn update(app: &App, model: &mut Model, update: Update) {
         // let current_time = app.duration.since_start.as_millis();
 
         match animation {
-            EnvelopeStage::AttackAnimation(a, release_duration_after) => {
+            EnvelopeStage::AttackAnimation(a, after_release) => {
                 let (brightness, done) = a.get_brightness_and_done(delta_time);
                 // p.set_brightness(brightness);
                 if done {
                     debug!("#{} end Attack => Release", p.id);
-                    let duration = {
-                        if *release_duration_after > 0 {
-                            *release_duration_after
+                    let (duration, final_brightness) = {
+                        if let Some(after) = after_release {
+                            (after.release_duration, after.final_brightness)
                         } else {
-                            model.settings.release_settings.duration
+                            (model.settings.release_settings.duration, 0.)
                         }
                     };
                     p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
                         duration,
                         p.brightness(),
-                        0.,
+                        final_brightness,
                         get_tween(&model.settings.release_settings.style),
                     ))
                 } else {
@@ -294,11 +305,20 @@ fn update(app: &App, model: &mut Model, update: Update) {
                     }
                 };
 
+                let final_brightness = {
+                    if light_message.final_brightness > 0. {
+                        light_message.final_brightness
+                    } else {
+                        model.settings.resting_brightness
+                    }
+                };
+
                 trigger_activation(
                     particles,
                     id,
                     position,
                     trigger_brightness,
+                    final_brightness,
                     attack_duration,
                     release_duration,
                     max_range_pixels,
