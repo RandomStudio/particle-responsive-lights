@@ -96,6 +96,8 @@ pub struct Settings {
     pub transmission_settings: TransmissionSettings,
     pub trigger_full_brightness: bool,
     pub trigger_by_order: bool,
+    pub mouse_enable: bool,
+    pub mouse_brightness_value: f32,
 }
 
 pub struct Model {
@@ -145,6 +147,8 @@ impl Model {
                 show_chime_index: DEFAULT_SHOW_INDEX,
                 trigger_full_brightness: DEFAULT_TRIGGER_FULL,
                 trigger_by_order: DEFAULT_TRIGGER_BY_ORDER,
+                mouse_enable: true,
+                mouse_brightness_value: 1.0,
             },
             egui,
             artnet: {
@@ -235,6 +239,8 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             transmission_settings,
             trigger_full_brightness,
             trigger_by_order,
+            mouse_enable,
+            mouse_brightness_value,
             ..
         } = &mut model.settings;
 
@@ -256,6 +262,14 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
         ui.separator();
 
         ui.checkbox(show_brightness_indicator, "Brightness indicator");
+        ui.checkbox(mouse_enable, "Allow mouse click triggers");
+
+        if *mouse_enable {
+            ui.horizontal(|ui| {
+                ui.label("Mouse click strength:");
+                ui.add(Slider::new(mouse_brightness_value, 0. ..=1.).suffix("x"));
+            });
+        }
 
         ui.horizontal(|ui| {
             ui.label("Chimes thickness:");

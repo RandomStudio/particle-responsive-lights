@@ -1,6 +1,6 @@
 use clap::Parser;
 use env_logger::{Builder, Env};
-use log::{debug, info};
+use log::{debug, info, warn};
 use nannou::prelude::*;
 use nannou_egui::Egui;
 use settings::{build_ui, Cli, EaseStyle, PhaseSettings, DEFAULT_WINDOW_H, DEFAULT_WINDOW_W};
@@ -27,6 +27,10 @@ fn main() {
 
 fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
     debug!("mouse pressed at position {}", model.mouse_position);
+    if !model.settings.mouse_enable {
+        warn!("mouse click ignored; mouse control disabled");
+        return;
+    }
     let PhaseSettings { style, .. } = &model.settings.attack_settings;
     let attack_duration = model.settings.attack_settings.duration;
     let release_duration = model.settings.release_settings.duration;
@@ -50,7 +54,7 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
             particles,
             id,
             position,
-            1.0,
+            model.settings.mouse_brightness_value,
             attack_duration,
             release_duration,
             max_range_pixels,
