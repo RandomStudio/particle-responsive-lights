@@ -71,10 +71,11 @@ fn trigger_activation(
         if p.id == main_target_id {
             activate_single(p, duration, style, p.brightness(), brightness, 0);
         } else {
-            let distance = main_target_position.distance(p.position);
+            // let distance = main_target_position.distance(p.position);
+            let distance = (main_target_position.x - p.position.x).abs();
             if distance <= max_range {
                 if let Some(new_brightness_target) =
-                    possibly_activate_by_transmission(p, distance, max_range)
+                    possibly_activate_by_transmission(p, distance, max_range, brightness)
                 {
                     activate_single(
                         p,
@@ -106,16 +107,20 @@ fn activate_single(
     );
     attack.set_elapsed(-delay);
     p.animation = EnvelopeStage::AttackAnimation(attack);
-    debug!("#{} activate", p.id);
+    debug!(
+        "#{} activate to target_brightness {}",
+        p.id, target_brightness
+    );
 }
 
 fn possibly_activate_by_transmission(
     p: &mut Particle,
     distance: f32,
     max_range: f32,
+    feed_in_brightness: f32,
 ) -> Option<f32> {
     let current_brightness = p.brightness();
-    let target_brightness = map_range(distance, 0., max_range, 1., 0.0);
+    let target_brightness = map_range(distance, 0., max_range, 1., 0.0) * feed_in_brightness;
     if target_brightness > current_brightness {
         Some(target_brightness)
     } else {
