@@ -230,9 +230,9 @@ fn update(app: &App, model: &mut Model, update: Update) {
         } = &model.settings.transmission_settings;
         let trigger_by_order = model.settings.trigger_by_order;
         let particles = &mut model.particles;
-        if let Some((order_id, target_brightness)) = model.tether.check_messages() {
+        if let Some(light_message) = model.tether.check_messages() {
             if let Some(target_particle) = particles.iter().find(|p| {
-                order_id == {
+                light_message.id == {
                     if trigger_by_order {
                         p.order
                     } else {
@@ -246,17 +246,25 @@ fn update(app: &App, model: &mut Model, update: Update) {
                     if model.settings.trigger_full_brightness {
                         1.
                     } else {
-                        target_brightness
+                        light_message.target_brightness
                     }
                 };
                 let max_range_pixels = *max_range * DEFAULT_WINDOW_W.to_f32().unwrap();
+
+                let duration = {
+                    if light_message.attack_duration > 0 {
+                        light_message.attack_duration
+                    } else {
+                        *duration
+                    }
+                };
 
                 trigger_activation(
                     particles,
                     id,
                     position,
                     trigger_brightness,
-                    *duration,
+                    duration,
                     max_range_pixels,
                     *max_delay,
                     style,
