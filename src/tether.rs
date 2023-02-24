@@ -17,7 +17,9 @@ pub struct TetherAgent {
 pub struct LightTriggerMessage {
     pub id: usize,
     pub target_brightness: f32,
+    #[serde(default)]
     pub attack_duration: usize,
+    #[serde(default)]
     pub release_duration: usize,
 }
 
