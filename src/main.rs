@@ -122,7 +122,7 @@ fn activate_single(
     final_brightness: f32,
     delay: i64,
 ) {
-    let mut attack = Attack::new(
+    let mut attack = Animation::new(
         attack_duration,
         start_brightness,
         target_brightness,
@@ -236,7 +236,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                             (model.settings.release_settings.duration, 0.)
                         }
                     };
-                    p.animation = EnvelopeStage::ReleaseAnimation(Release::new(
+                    p.animation = EnvelopeStage::ReleaseAnimation(Animation::new(
                         duration,
                         p.brightness(),
                         final_brightness,
