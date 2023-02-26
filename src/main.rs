@@ -3,13 +3,15 @@ use env_logger::{Builder, Env};
 use log::{debug, info, warn};
 use nannou::prelude::*;
 use nannou_egui::Egui;
-use settings::{build_ui, Cli, EaseStyle, PhaseSettings, DEFAULT_WINDOW_H, DEFAULT_WINDOW_W};
+use settings::{Cli, EaseStyle, PhaseSettings, DEFAULT_WINDOW_H, DEFAULT_WINDOW_W};
 use settings::{Model, TransmissionSettings};
+use ui::build_ui;
 
 mod animation;
 use crate::animation::*;
 
 mod settings;
+mod ui;
 
 mod particles;
 use crate::particles::*;
