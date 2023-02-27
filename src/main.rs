@@ -67,6 +67,8 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
     }
 }
 
+// TODO: consolidate these options as PhaseSettings, TransmissionSettings, etc.
+// rather than individual args
 fn trigger_activation(
     particles: &mut Vec<Particle>,
     main_target_id: usize,
@@ -264,10 +266,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
 
     if model.tether.is_connected() {
         let PhaseSettings { style, .. } = &model.settings.attack_settings;
-        let TransmissionSettings {
-            max_range,
-            max_delay,
-        } = &model.settings.transmission_settings;
+
         let trigger_by_order = model.settings.trigger_by_order;
         let particles = &mut model.particles;
         if let Some(light_message) = model.tether.check_messages() {
@@ -289,31 +288,27 @@ fn update(app: &App, model: &mut Model, update: Update) {
                         light_message.target_brightness
                     }
                 };
-                let max_range_pixels = *max_range * DEFAULT_WINDOW_W.to_f32().unwrap();
 
-                let attack_duration = {
-                    if light_message.attack_duration > 0 {
-                        light_message.attack_duration
-                    } else {
-                        model.settings.attack_settings.duration
-                    }
-                };
+                let max_range = light_message
+                    .transmission_range
+                    .unwrap_or(model.settings.transmission_settings.max_range);
+                let max_range_pixels = max_range * DEFAULT_WINDOW_W.to_f32().unwrap();
 
-                let release_duration = {
-                    if light_message.release_duration > 0 {
-                        light_message.release_duration
-                    } else {
-                        model.settings.release_settings.duration
-                    }
-                };
+                let max_delay = light_message
+                    .transmission_delay
+                    .unwrap_or(model.settings.transmission_settings.max_delay);
 
-                let final_brightness = {
-                    if light_message.final_brightness > 0. {
-                        light_message.final_brightness
-                    } else {
-                        model.settings.resting_brightness
-                    }
-                };
+                let attack_duration = light_message
+                    .attack_duration
+                    .unwrap_or(model.settings.attack_settings.duration);
+
+                let release_duration = light_message
+                    .release_duration
+                    .unwrap_or(model.settings.release_settings.duration);
+
+                let final_brightness = light_message
+                    .final_brightness
+                    .unwrap_or(model.settings.resting_brightness);
 
                 trigger_activation(
                     particles,
@@ -324,7 +319,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                     attack_duration,
                     release_duration,
                     max_range_pixels,
-                    *max_delay,
+                    max_delay,
                     style,
                 );
             }

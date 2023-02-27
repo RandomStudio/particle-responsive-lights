@@ -17,12 +17,11 @@ pub struct TetherAgent {
 pub struct LightTriggerMessage {
     pub id: usize,
     pub target_brightness: f32,
-    #[serde(default)]
-    pub attack_duration: usize,
-    #[serde(default)]
-    pub release_duration: usize,
-    #[serde(default)]
-    pub final_brightness: f32,
+    pub attack_duration: Option<usize>,
+    pub release_duration: Option<usize>,
+    pub final_brightness: Option<f32>,
+    pub transmission_range: Option<f32>,
+    pub transmission_delay: Option<i64>,
 }
 
 impl TetherAgent {
