@@ -116,6 +116,18 @@ impl Model {
             warn!("Tether connection disabled")
         }
 
+        let mut artnet = {
+            if cli.artnet_broadcast {
+                ArtNetInterface::new(ArtNetMode::Broadcast)
+            } else {
+                ArtNetInterface::new(ArtNetMode::Unicast(
+                    SocketAddr::from((cli.unicast_src, 6454)),
+                    SocketAddr::from((cli.unicast_dst, 6454)),
+                ))
+            }
+        };
+        artnet.create_brightness_mapping();
+
         Model {
             window_id,
             particles: build_layout(
@@ -149,16 +161,7 @@ impl Model {
                 resting_brightness: 0.,
             },
             egui,
-            artnet: {
-                if cli.artnet_broadcast {
-                    ArtNetInterface::new(ArtNetMode::Broadcast)
-                } else {
-                    ArtNetInterface::new(ArtNetMode::Unicast(
-                        SocketAddr::from((cli.unicast_src, 6454)),
-                        SocketAddr::from((cli.unicast_dst, 6454)),
-                    ))
-                }
-            },
+            artnet,
             tether,
         }
     }

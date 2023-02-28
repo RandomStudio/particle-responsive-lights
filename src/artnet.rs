@@ -1,12 +1,17 @@
 use artnet_protocol::*;
+use log::debug;
 use nannou::prelude::{map_range, ToPrimitive};
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
+use tween::Tweener;
 
 use crate::particles::Particle;
+
+type LUT = [u8; 256];
 
 pub struct ArtNetInterface {
     socket: UdpSocket,
     destination: SocketAddr,
+    brightness_mapping: Option<LUT>,
 }
 
 pub enum ArtNetMode {
@@ -29,6 +34,7 @@ impl ArtNetInterface {
                 ArtNetInterface {
                     socket,
                     destination: broadcast_addr,
+                    brightness_mapping: None,
                 }
             }
             ArtNetMode::Unicast(src, destination) => {
@@ -38,9 +44,23 @@ impl ArtNetInterface {
                 ArtNetInterface {
                     socket,
                     destination,
+                    brightness_mapping: None,
                 }
             }
         }
+    }
+
+    pub fn create_brightness_mapping(&mut self) {
+        let mut lookup: LUT = [0; 256];
+        let mut tweener = Tweener::cubic_in(0., 1.0, 256);
+        for i in 0..=255 {
+            let output = tweener.move_by(1);
+            // let output = i.try_into().unwrap();
+            let output_rounded = (output * 255.).to_u8().unwrap_or(0);
+            debug!("input level {i} -> {output_rounded} (from {output})");
+            lookup[i] = output_rounded;
+        }
+        self.brightness_mapping = Some(lookup);
     }
 
     pub fn update(&self, particles: &[Particle]) {
@@ -50,7 +70,14 @@ impl ArtNetInterface {
         for p in particles {
             for _i in 0..channels_per_fixture {
                 if let Some(brightness) = map_range(p.brightness(), 0., 1., 0., 255.).to_u8() {
-                    channels.push(brightness);
+                    match self.brightness_mapping {
+                        Some(lookup) => {
+                            channels.push(lookup[brightness.to_usize().unwrap()]);
+                        }
+                        None => {
+                            channels.push(brightness);
+                        }
+                    }
                 }
             }
         }
