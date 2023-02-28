@@ -52,9 +52,9 @@ impl ArtNetInterface {
 
     pub fn create_brightness_mapping(&mut self) {
         let mut lookup: LUT = [0; 256];
-        let mut tweener = Tweener::cubic_in(0., 1.0, 256);
+        let mut tweener = Tweener::cubic_in(0., 1.0, 255);
         for i in 0..=255 {
-            let output = tweener.move_by(1);
+            let output = tweener.move_to(i);
             // let output = i.try_into().unwrap();
             let output_rounded = (output * 255.).to_u8().unwrap_or(0);
             debug!("input level {i} -> {output_rounded} (from {output})");
