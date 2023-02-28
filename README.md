@@ -18,6 +18,12 @@ That's it. (Assuming your Rust environment is reasonably up to date.)
 - MQTT + MessagePack = Tether
 
 ___
+## Command-line arguments
+Pass `--help` to see the full list, e.g. `cargo run -- --help`
+
+If testing locally, you may want to use ArtNet Broadcast mode and disable Tether, i.e.
+`--artnet.broadcast --tether.disable`
+
 ## Remote Triggers
 ### Trigger a single fixture
 
