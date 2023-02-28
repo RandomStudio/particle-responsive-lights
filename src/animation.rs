@@ -33,7 +33,7 @@ impl Animation {
     /// Only return a new progress value if the animation is actually updating;
     /// for example when there is a delayed start, leave the progress alone
     fn update(&mut self, delta_time: usize) -> Option<f32> {
-        self.elapsed = self.elapsed + delta_time.to_i64().unwrap();
+        self.elapsed += delta_time.to_i64().unwrap();
         let elapsed = self.elapsed;
 
         if elapsed >= 0 {

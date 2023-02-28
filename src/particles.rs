@@ -32,11 +32,10 @@ pub fn build_layout(count: usize, width_range: f32, height_range: f32) -> Vec<Pa
     let gap_x = width_range / count.to_f32().unwrap();
     let start_position = Point2::new(-width_range / 2. + gap_x / 2., -height_range / 2.);
     let mut particles: Vec<Particle> = vec![];
-    for i in 0..count {
-        let id = DEFAULT_ORDER[i];
-        println!("assign order {} to ID #{}", id, i);
+    for (i, id) in DEFAULT_ORDER.iter().enumerate().take(count) {
+        println!("assign order {id} to ID #{i}");
         particles.push(Particle::new(
-            id,
+            *id,
             i,
             Point2::new(
                 start_position.x + gap_x * i.to_f32().unwrap(),
