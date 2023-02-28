@@ -17,9 +17,31 @@ That's it. (Assuming your Rust environment is reasonably up to date.)
 - [artnet_protocol](https://docs.rs/artnet_protocol/0.4.1/artnet_protocol/index.html)) for ArtNet/DMX output
 - MQTT + MessagePack = Tether
 
-### Remote Triggers
+___
+## Remote Triggers
+### Trigger a single fixture
+
 Example:
 ```
 tether-send --host localhost --topic dummy/dummy/lightTriggers --message=\{\"id\":7\,\"targetBrightness\":0.7\,\"attackDuration\":1000,\"finalBrightness\":0.2,\"transmissionRange\":0\}
 ```
-Other than `id` and `targetBrightness`, all fields are optional.
+Other than `id` and `targetBrightness`, all fields are optional. So the following also works:
+```
+tether-send --host localhost --topic dummy/dummy/lightTriggers --message=\{\"id\":0\,\"targetBrightness\":1.0\}
+```
+
+### Fade all lights simultaneously
+Example - all on to full brightness:
+```
+tether-send --host localhost --topic dummy/dummy/lightReset --message=\{\"targetBrightness\":1.0\}
+```
+
+To black:
+```
+tether-send --host localhost --topic dummy/dummy/lightReset --message=\{\"targetBrightness\":0\}
+```
+
+Optional duration - if not provided, the fade will be "instant". Here's an example with a 3 second duration, to half-brightness:
+```
+tether-send --host localhost --topic dummy/dummy/lightReset --message=\{\"targetBrightness\":0.5\,\"fadeDuration\":3000\}
+```
