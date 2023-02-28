@@ -5,7 +5,8 @@ use mqtt::{Client, Message, Receiver};
 use paho_mqtt as mqtt;
 use serde::Deserialize;
 
-const INPUT_TOPIC: &str = "+/+/lightTriggers";
+const INPUT_TOPICS: &[&str] = &["+/+/lightTriggers", "+/+/lightReset"];
+const INPUT_QOS: &[i32; INPUT_TOPICS.len()] = &[2, 2];
 
 pub struct TetherAgent {
     client: Client,
@@ -22,6 +23,20 @@ pub struct LightTriggerMessage {
     pub final_brightness: Option<f32>,
     pub transmission_range: Option<f32>,
     pub transmission_delay: Option<i64>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LightResetMessage {
+    #[serde(default)]
+    pub target_brightness: Option<f32>,
+    #[serde(default)]
+    pub fade_duration: Option<usize>,
+}
+
+pub enum LightMessages {
+    Trigger(LightTriggerMessage),
+    Reset(LightResetMessage),
 }
 
 impl TetherAgent {
@@ -60,7 +75,7 @@ impl TetherAgent {
         match self.client.connect(conn_opts) {
             Ok(res) => {
                 info!("Connected OK: {res:?}");
-                match self.client.subscribe(INPUT_TOPIC, 2) {
+                match self.client.subscribe_many(INPUT_TOPICS, INPUT_QOS) {
                     Ok(res) => {
                         debug!("Subscribe OK: {res:?}");
                     }
@@ -76,23 +91,55 @@ impl TetherAgent {
         }
     }
 
-    pub fn check_messages(&self) -> Option<LightTriggerMessage> {
+    pub fn check_messages(&self) -> Option<LightMessages> {
         if let Some(m) = self.receiver.try_iter().find_map(|m| m) {
             let payload = m.payload().to_vec();
-            let light_message: Result<LightTriggerMessage, rmp_serde::decode::Error> =
-                rmp_serde::from_slice(&payload);
-            match light_message {
-                Ok(parsed) => {
-                    info!("Parsed LightTriggerMessage: {parsed:?}");
-                    Some(parsed)
+
+            let plug_name = parse_plug_name(m.topic());
+
+            match plug_name {
+                "lightTriggers" => {
+                    let light_message: Result<LightTriggerMessage, rmp_serde::decode::Error> =
+                        rmp_serde::from_slice(&payload);
+
+                    match light_message {
+                        Ok(parsed) => {
+                            info!("Parsed LightTriggerMessage: {parsed:?}");
+                            if parsed.target_brightness.is_nan() {
+                                panic!("target_brightness should be a valid number");
+                            }
+                            Some(LightMessages::Trigger(parsed))
+                        }
+                        Err(e) => {
+                            error!("Failed to parse Light Reset message: {}", e);
+                            None
+                        }
+                    }
                 }
-                Err(e) => {
-                    error!("Error parsing LightTriggerMessage: {e:?}");
-                    None
+                "lightReset" => {
+                    let light_message: Result<LightResetMessage, rmp_serde::decode::Error> =
+                        rmp_serde::from_slice(&payload);
+
+                    match light_message {
+                        Ok(parsed) => {
+                            info!("Parsed LightResetMessage: {parsed:?}");
+                            Some(LightMessages::Reset(parsed))
+                        }
+                        Err(e) => {
+                            error!("Failed to parse Light Reset message: {}", e);
+                            None
+                        }
+                    }
                 }
+                _ => None,
             }
         } else {
             None
         }
     }
+}
+
+fn parse_plug_name(topic: &str) -> &str {
+    let parts: Vec<&str> = topic.split('/').collect();
+    parts[2]
 }

@@ -5,6 +5,7 @@ use nannou::prelude::*;
 use nannou_egui::Egui;
 use settings::{Cli, EaseStyle, PhaseSettings, DEFAULT_WINDOW_H, DEFAULT_WINDOW_W};
 use settings::{Model, TransmissionSettings};
+use tether::LightMessages;
 use ui::build_ui;
 
 mod animation;
@@ -63,6 +64,22 @@ fn mouse_pressed(_app: &App, model: &mut Model, _button: MouseButton) {
             max_range_pixels,
             *max_delay,
             style,
+        );
+    }
+}
+
+fn fade_all(particles: &mut Vec<Particle>, target_brightness: f32, duration: usize) {
+    for p in particles {
+        let release = Animation::new(
+            duration,
+            p.brightness(),
+            target_brightness,
+            get_tween(&EaseStyle::Linear),
+        );
+        p.animation = EnvelopeStage::ReleaseAnimation(release);
+        debug!(
+            "#{} fade to {} over {}ms",
+            p.id, target_brightness, duration
         );
     }
 }
@@ -270,58 +287,67 @@ fn update(app: &App, model: &mut Model, update: Update) {
         let trigger_by_order = model.settings.trigger_by_order;
         let particles = &mut model.particles;
         if let Some(light_message) = model.tether.check_messages() {
-            if let Some(target_particle) = particles.iter().find(|p| {
-                light_message.id == {
-                    if trigger_by_order {
-                        p.order
-                    } else {
-                        p.id
+            match light_message {
+                LightMessages::Trigger(m) => {
+                    if let Some(target_particle) = particles.iter().find(|p| {
+                        m.id == {
+                            if trigger_by_order {
+                                p.order
+                            } else {
+                                p.id
+                            }
+                        }
+                    }) {
+                        let position = target_particle.position;
+                        let id = target_particle.id;
+                        let trigger_brightness = {
+                            if model.settings.trigger_full_brightness {
+                                1.
+                            } else {
+                                m.target_brightness
+                            }
+                        };
+
+                        let max_range = m
+                            .transmission_range
+                            .unwrap_or(model.settings.transmission_settings.max_range);
+                        let max_range_pixels = max_range * DEFAULT_WINDOW_W.to_f32().unwrap();
+
+                        let max_delay = m
+                            .transmission_delay
+                            .unwrap_or(model.settings.transmission_settings.max_delay);
+
+                        let attack_duration = m
+                            .attack_duration
+                            .unwrap_or(model.settings.attack_settings.duration);
+
+                        let release_duration = m
+                            .release_duration
+                            .unwrap_or(model.settings.release_settings.duration);
+
+                        let final_brightness = m
+                            .final_brightness
+                            .unwrap_or(model.settings.resting_brightness);
+
+                        trigger_activation(
+                            particles,
+                            id,
+                            position,
+                            trigger_brightness,
+                            final_brightness,
+                            attack_duration,
+                            release_duration,
+                            max_range_pixels,
+                            max_delay,
+                            style,
+                        );
                     }
                 }
-            }) {
-                let position = target_particle.position;
-                let id = target_particle.id;
-                let trigger_brightness = {
-                    if model.settings.trigger_full_brightness {
-                        1.
-                    } else {
-                        light_message.target_brightness
-                    }
-                };
-
-                let max_range = light_message
-                    .transmission_range
-                    .unwrap_or(model.settings.transmission_settings.max_range);
-                let max_range_pixels = max_range * DEFAULT_WINDOW_W.to_f32().unwrap();
-
-                let max_delay = light_message
-                    .transmission_delay
-                    .unwrap_or(model.settings.transmission_settings.max_delay);
-
-                let attack_duration = light_message
-                    .attack_duration
-                    .unwrap_or(model.settings.attack_settings.duration);
-
-                let release_duration = light_message
-                    .release_duration
-                    .unwrap_or(model.settings.release_settings.duration);
-
-                let final_brightness = light_message
-                    .final_brightness
-                    .unwrap_or(model.settings.resting_brightness);
-
-                trigger_activation(
+                LightMessages::Reset(m) => fade_all(
                     particles,
-                    id,
-                    position,
-                    trigger_brightness,
-                    final_brightness,
-                    attack_duration,
-                    release_duration,
-                    max_range_pixels,
-                    max_delay,
-                    style,
-                );
+                    m.target_brightness.unwrap_or(0.),
+                    m.fade_duration.unwrap_or(0),
+                ),
             }
         }
     }
