@@ -161,5 +161,20 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
                     .create_brightness_mapping(lights_lookup_mapping);
             }
         });
+
+        // ---------------- SAVE/LOAD
+        ui.separator();
+
+        ui.heading("On disk");
+        // ui.label("Save the current settings as defaults, or load (revert to the version on disk)");
+
+        ui.horizontal(|ui| {
+            if ui.button("Save").clicked() {
+                model.settings.save().unwrap();
+            }
+            if ui.button("Revert").clicked() {
+                model.settings.load().unwrap();
+            }
+        })
     });
 }

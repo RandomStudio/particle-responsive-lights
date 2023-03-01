@@ -1,9 +1,10 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use clap::Parser;
-use log::warn;
+use log::{debug, error, info, warn};
 use nannou::prelude::*;
 use nannou_egui::Egui;
+use serde::{Deserialize, Serialize};
 use tween::*;
 
 use crate::artnet::{ArtNetInterface, ArtNetMode};
@@ -13,6 +14,8 @@ use crate::tether::TetherAgent;
 
 use strum_macros::Display;
 use strum_macros::EnumIter;
+
+const DEFAULT_SETTINGS_FILE_PATH: &str = "./settings.json";
 
 pub const DEFAULT_WINDOW_W: u32 = 1280;
 pub const DEFAULT_WINDOW_H: u32 = 600;
@@ -73,16 +76,19 @@ pub struct Cli {
     pub unicast_dst: std::net::IpAddr,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PhaseSettings {
     pub duration: usize,
     pub style: EaseStyle,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct TransmissionSettings {
     pub max_range: f32,
     pub max_delay: i64,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Settings {
     pub chimes_count: usize,
     pub show_brightness_indicator: bool,
@@ -98,6 +104,41 @@ pub struct Settings {
     pub mouse_brightness_value: f32,
     pub resting_brightness: f32,
     pub lights_lookup_mapping: EaseStyle,
+}
+
+impl Settings {
+    pub fn save(&self) -> Result<(), ()> {
+        let file_path = DEFAULT_SETTINGS_FILE_PATH;
+        let text = serde_json::to_string_pretty(self).expect("Failed to serialise Settings");
+        match std::fs::write(file_path, text) {
+            Ok(()) => {
+                info!("Wrote settings to file {file_path}");
+                Ok(())
+            }
+            Err(e) => {
+                error!("Error writing settings to file: {:?}", e);
+                Err(())
+            }
+        }
+    }
+
+    pub fn load(&mut self) -> Result<(), ()> {
+        let file_path = DEFAULT_SETTINGS_FILE_PATH;
+        let text = std::fs::read_to_string(file_path).expect("Error opening settings file");
+
+        match serde_json::from_str::<Settings>(&text) {
+            Ok(data) => {
+                *self = Settings { ..data };
+                info!("Loaded settings from file {file_path} ok");
+                debug!("Loaded: {:?}", self);
+                Ok(())
+            }
+            Err(e) => {
+                error!("Failed to parse settings data: {e}");
+                Err(())
+            }
+        }
+    }
 }
 
 pub struct Model {
@@ -174,7 +215,7 @@ impl Model {
 // TODO: seems tedious to have to re-write all these enums
 // but Box<dyn Tween<f32>> is difficult to impl PartialEQ for
 // so UI / ComboBox is difficult
-#[derive(PartialEq, Debug, EnumIter, Display)]
+#[derive(PartialEq, Debug, EnumIter, Display, Serialize, Deserialize)]
 pub enum EaseStyle {
     Linear,
     BounceIn,

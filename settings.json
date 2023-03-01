@@ -1,0 +1,25 @@
+{
+  "chimes_count": 14,
+  "show_brightness_indicator": true,
+  "show_chime_index": true,
+  "chime_thickness": 15.0,
+  "chime_length": 250.0,
+  "attack_settings": {
+    "duration": 2800,
+    "style": "SineBoth"
+  },
+  "release_settings": {
+    "duration": 5000,
+    "style": "BounceIn"
+  },
+  "transmission_settings": {
+    "max_range": 0.15,
+    "max_delay": 500
+  },
+  "trigger_full_brightness": false,
+  "trigger_by_order": true,
+  "mouse_enable": true,
+  "mouse_brightness_value": 1.0,
+  "resting_brightness": 0.0,
+  "lights_lookup_mapping": "QuadIn"
+}
