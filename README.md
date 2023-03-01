@@ -18,12 +18,28 @@ That's it. (Assuming your Rust environment is reasonably up to date.)
 - MQTT + MessagePack = Tether
 
 ___
+## Saving/loading settings
+By default, your custom settings will be saved to a file named `settings.json`, and these are what will be loaded on startup.
+
+Keep in mind that these settings apply when you are clicking on the light fixtures to test out various effects, and they will be used as defaults in "live" remote-controlled animations as well, **but some aspects of specific animation effects can be overridden by incoming trigger messages**. 
+
+For example, you may specify a (long) release duration of 9000ms, and this value will indeed be used if the LightTriggerMessage does not specify anything, e.g.:
+```
+{ id: 0, targetBrightness: 0.9 }
+```
+...but will be overridden to 1000ms if the incoming message specifies it:
+```
+{ id: 0, targetBrightness: 0.9, releaseDuration: 1000 }
+```
+
+
 ## Command-line arguments
 Pass `--help` to see the full list, e.g. `cargo run -- --help`
 
 If testing locally, you may want to use ArtNet Broadcast mode and disable Tether, i.e.
 `--artnet.broadcast --tether.disable`
 
+___ 
 ## Remote Triggers
 ### Trigger a single fixture
 
