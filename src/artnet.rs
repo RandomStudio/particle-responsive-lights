@@ -52,7 +52,8 @@ impl ArtNetInterface {
 
     pub fn create_brightness_mapping(&mut self) {
         let mut lookup: LUT = [0; 256];
-        let mut tweener = Tweener::cubic_in(0., 1.0, 255);
+
+        let mut tweener = Tweener::quad_in(0., 1.0, 255);
         for i in 0..=255 {
             let output = tweener.move_to(i);
             // let output = i.try_into().unwrap();
