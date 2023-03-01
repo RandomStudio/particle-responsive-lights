@@ -74,6 +74,9 @@ pub struct Cli {
     /// IP address for ArtNet destination node (ignored if broadcast enabled)
     #[arg(long = "artnet.destination", default_value_t=UNICAST_DST)]
     pub unicast_dst: std::net::IpAddr,
+
+    #[arg(long = "ignoreFile")]
+    ignore_settings_file: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -124,17 +127,21 @@ impl Settings {
 
     pub fn load(&mut self) -> Result<(), ()> {
         let file_path = DEFAULT_SETTINGS_FILE_PATH;
-        let text = std::fs::read_to_string(file_path).expect("Error opening settings file");
-
-        match serde_json::from_str::<Settings>(&text) {
-            Ok(data) => {
-                *self = Settings { ..data };
-                info!("Loaded settings from file {file_path} ok");
-                debug!("Loaded: {:?}", self);
-                Ok(())
-            }
+        match std::fs::read_to_string(file_path) {
+            Ok(text) => match serde_json::from_str::<Settings>(&text) {
+                Ok(data) => {
+                    *self = Settings { ..data };
+                    info!("Loaded settings from file {file_path} ok");
+                    debug!("Loaded: {:?}", self);
+                    Ok(())
+                }
+                Err(e) => {
+                    error!("Failed to parse settings data: {e}");
+                    Err(())
+                }
+            },
             Err(e) => {
-                error!("Failed to parse settings data: {e}");
+                error!("Error when loading settings file: {e}");
                 Err(())
             }
         }
@@ -172,6 +179,32 @@ impl Model {
         };
         artnet.create_brightness_mapping(&DEFAULT_BRIGHTNESS_MAPPING);
 
+        let mut settings = Settings {
+            chimes_count: DEFAULT_COUNT,
+            chime_thickness: DEFAULT_THICKNESS,
+            chime_length: DEFAULT_LENGTH,
+            attack_settings: PhaseSettings {
+                duration: DEFAULT_ATTACK_DURATION,
+                style: EaseStyle::SineBoth,
+            },
+            release_settings: PhaseSettings {
+                duration: DEFAULT_RELEASE_DURATION,
+                style: EaseStyle::BounceIn,
+            },
+            transmission_settings: TransmissionSettings {
+                max_range: DEFAULT_TRANSMISSION_RANGE,
+                max_delay: DEFAULT_TRANSMISSION_DELAY,
+            },
+            show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
+            show_chime_index: DEFAULT_SHOW_INDEX,
+            trigger_full_brightness: DEFAULT_TRIGGER_FULL,
+            trigger_by_order: DEFAULT_TRIGGER_BY_ORDER,
+            mouse_enable: true,
+            mouse_brightness_value: 1.0,
+            resting_brightness: 0.,
+            lights_lookup_mapping: DEFAULT_BRIGHTNESS_MAPPING,
+        };
+
         Model {
             window_id,
             particles: build_layout(
@@ -180,30 +213,22 @@ impl Model {
                 DEFAULT_WINDOW_H.to_f32() * DEFAULT_HEIGHT_RATIO,
             ),
             mouse_position: Point2::new(0., 0.),
-            settings: Settings {
-                chimes_count: DEFAULT_COUNT,
-                chime_thickness: DEFAULT_THICKNESS,
-                chime_length: DEFAULT_LENGTH,
-                attack_settings: PhaseSettings {
-                    duration: DEFAULT_ATTACK_DURATION,
-                    style: EaseStyle::SineBoth,
-                },
-                release_settings: PhaseSettings {
-                    duration: DEFAULT_RELEASE_DURATION,
-                    style: EaseStyle::BounceIn,
-                },
-                transmission_settings: TransmissionSettings {
-                    max_range: DEFAULT_TRANSMISSION_RANGE,
-                    max_delay: DEFAULT_TRANSMISSION_DELAY,
-                },
-                show_brightness_indicator: DEFAULT_SHOW_B_INDICATOR,
-                show_chime_index: DEFAULT_SHOW_INDEX,
-                trigger_full_brightness: DEFAULT_TRIGGER_FULL,
-                trigger_by_order: DEFAULT_TRIGGER_BY_ORDER,
-                mouse_enable: true,
-                mouse_brightness_value: 1.0,
-                resting_brightness: 0.,
-                lights_lookup_mapping: DEFAULT_BRIGHTNESS_MAPPING,
+            settings: {
+                if cli.ignore_settings_file {
+                    warn!("Asked to ignore settings file from CLI; hard-coded defaults will apply");
+                    settings
+                } else {
+                    match settings.load() {
+                        Ok(()) => {
+                            info!("Settings loaded OK from file");
+                            settings
+                        }
+                        Err(()) => {
+                            warn!("Settings could not be loaded from file; maybe create one?");
+                            settings
+                        }
+                    }
+                }
             },
             egui,
             artnet,
