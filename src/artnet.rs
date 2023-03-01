@@ -4,7 +4,10 @@ use nannou::prelude::{map_range, ToPrimitive};
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 use tween::Tweener;
 
-use crate::particles::Particle;
+use crate::{
+    particles::Particle,
+    settings::{get_new_tween, EaseStyle},
+};
 
 type LUT = [u8; 256];
 
@@ -50,10 +53,13 @@ impl ArtNetInterface {
         }
     }
 
-    pub fn create_brightness_mapping(&mut self) {
+    pub fn create_brightness_mapping(&mut self, ease_style: &EaseStyle) {
         let mut lookup: LUT = [0; 256];
 
-        let mut tweener = Tweener::quad_in(0., 1.0, 255);
+        // let mut tweener = Tweener::quad_in(0., 1.0, 255);
+        let tween = get_new_tween(&ease_style);
+        let mut tweener = Tweener::new(0., 1.0, 255, tween);
+
         for i in 0..=255 {
             let output = tweener.move_to(i);
             // let output = i.try_into().unwrap();

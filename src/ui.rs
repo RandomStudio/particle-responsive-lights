@@ -30,10 +30,13 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             mouse_enable,
             mouse_brightness_value,
             resting_brightness,
+            lights_lookup_mapping,
             ..
         } = &mut model.settings;
 
         ui.set_min_height(600.);
+
+        // ---------------- VIEW/INTERACTION SECTION
 
         ui.collapsing("View / Interaction", |ui| {
             ui.horizontal(|ui| {
@@ -71,6 +74,8 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
                 ui.add(Slider::new(chime_length, 10. ..=2000.).suffix("px"));
             });
         });
+
+        // ---------------- ANIMATION SECTION
 
         ui.collapsing("Animation", |ui| {
             let PhaseSettings { duration, style } = attack_settings;
@@ -129,12 +134,32 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
                 ui.add(Slider::new(max_delay, 0..=4000).suffix("ms"))
             });
         });
+
+        // ---------------- REMOTE CONTROL SECTION
+
         ui.collapsing("Remote Control", |ui| {
             ui.checkbox(
                 trigger_full_brightness,
                 "Remote trigger max brightness always",
             );
             ui.checkbox(trigger_by_order, "Remote trigger by order not #ID");
+        });
+
+        // ---------------- ARTNET SECTION
+        ui.collapsing("ArtNet Output", |ui| {
+            ComboBox::from_label("Brightness LUT style")
+                .selected_text(lights_lookup_mapping.to_string())
+                .show_ui(ui, |ui| {
+                    for named_style in EaseStyle::iter() {
+                        let n = named_style.to_string();
+                        ui.selectable_value(lights_lookup_mapping, named_style, n);
+                    }
+                });
+            if ui.button("apply").clicked() {
+                model
+                    .artnet
+                    .create_brightness_mapping(lights_lookup_mapping);
+            }
         });
     });
 }

@@ -44,6 +44,8 @@ const TETHER_HOST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const UNICAST_SRC: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 102));
 const UNICAST_DST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1));
 
+const DEFAULT_BRIGHTNESS_MAPPING: EaseStyle = EaseStyle::QuadIn;
+
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
@@ -95,6 +97,7 @@ pub struct Settings {
     pub mouse_enable: bool,
     pub mouse_brightness_value: f32,
     pub resting_brightness: f32,
+    pub lights_lookup_mapping: EaseStyle,
 }
 
 pub struct Model {
@@ -126,7 +129,7 @@ impl Model {
                 ))
             }
         };
-        artnet.create_brightness_mapping();
+        artnet.create_brightness_mapping(&DEFAULT_BRIGHTNESS_MAPPING);
 
         Model {
             window_id,
@@ -159,6 +162,7 @@ impl Model {
                 mouse_enable: true,
                 mouse_brightness_value: 1.0,
                 resting_brightness: 0.,
+                lights_lookup_mapping: DEFAULT_BRIGHTNESS_MAPPING,
             },
             egui,
             artnet,
@@ -196,7 +200,9 @@ pub enum EaseStyle {
     CircBoth,
 }
 
-pub fn get_tween(style: &EaseStyle) -> Box<dyn Tween<f32>> {
+// TODO: new allocation for every new animation? A little inefficient
+// Could be cached somehow, e.g. if the tween already exists.
+pub fn get_new_tween(style: &EaseStyle) -> Box<dyn Tween<f32>> {
     match style {
         EaseStyle::Linear => Box::new(Linear),
         EaseStyle::BounceIn => Box::new(BounceIn),

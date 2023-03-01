@@ -16,7 +16,7 @@ mod ui;
 
 mod particles;
 use crate::particles::*;
-use crate::settings::get_tween;
+use crate::settings::get_new_tween;
 
 mod artnet;
 
@@ -74,7 +74,7 @@ fn fade_all(particles: &mut Vec<Particle>, target_brightness: f32, duration: usi
             duration,
             p.brightness(),
             target_brightness,
-            get_tween(&EaseStyle::Linear),
+            get_new_tween(&EaseStyle::Linear),
         );
         p.animation = EnvelopeStage::ReleaseAnimation(release);
         debug!(
@@ -147,7 +147,7 @@ fn activate_single(
         attack_duration,
         start_brightness,
         target_brightness,
-        get_tween(ease_style),
+        get_new_tween(ease_style),
     );
     attack.set_elapsed(-delay);
     p.animation = EnvelopeStage::AttackAnimation(
@@ -261,7 +261,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
                         duration,
                         p.brightness(),
                         final_brightness,
-                        get_tween(&model.settings.release_settings.style),
+                        get_new_tween(&model.settings.release_settings.style),
                     ))
                 } else {
                     p.set_brightness(brightness);
