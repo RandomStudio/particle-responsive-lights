@@ -9,7 +9,7 @@ Generally, it should be as simple as:
 
 However, Paho Eclipse MQTT is actually a C library, so it has some dependencies of its own. If you find that the build fails, you might need to `brew install openssh` and `brew install cmake` (on MacOS).
 
-If you're testing without an ArtNet device available, run with `--artnet.broadcast`. You can monitor output, if you like, with a tool such as [ArtNetView](https://artnetview.com/).
+If you're testing without an ArtNet device available, run with `--artnet.broadcast` or the application may simply panic on startup. You can monitor output, if you like, with a tool such as [ArtNetView](https://artnetview.com/).
 
 ## Tech stack
 - [Nannou](https://nannou.cc/): creative coding framework
