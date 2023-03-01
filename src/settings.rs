@@ -75,6 +75,7 @@ pub struct Cli {
     #[arg(long = "artnet.destination", default_value_t=UNICAST_DST)]
     pub unicast_dst: std::net::IpAddr,
 
+    /// Ignore the settings.json file, even if it exists; apply hard-coded defaults instead
     #[arg(long = "ignoreFile")]
     ignore_settings_file: bool,
 }
