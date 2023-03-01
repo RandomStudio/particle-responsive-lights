@@ -15,8 +15,8 @@ If you're testing without an ArtNet device available, run with `--artnet.broadca
 - [Nannou](https://nannou.cc/): creative coding framework
 - [Tween crate](https://docs.rs/tween/2.0.0/tween/index.html) as per the OG Robert Penning ease functions ([demo](https://easings.net/#))
 - [Strum](https://crates.io/crates/strum) and [Strum macros](https://crates.io/crates/strum_macros), specfically for dealing with enums in a way that is convenient for the GUI
-- [artnet_protocol](https://docs.rs/artnet_protocol/0.4.1/artnet_protocol/index.html)) for ArtNet/DMX output
-- MQTT + MessagePack = Tether
+- [artnet_protocol](https://docs.rs/artnet_protocol/0.4.1/artnet_protocol/index.html) for ArtNet/DMX output
+- [MQTT](https://crates.io/crates/paho-mqtt) + [MessagePack](https://crates.io/crates/rmp-serde) = Tether
 
 ___
 ## Saving/loading settings
