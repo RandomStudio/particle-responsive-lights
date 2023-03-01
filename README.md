@@ -3,12 +3,13 @@
 Each chime is a "particle" in this system.
 
 ## Development setup
-Paho Eclipse MQTT is actually a C library, so it has some dependencies. On Mac, `brew install openssh` and `brew install cmake` if necessary.
-
+Generally, it should be as simple as:
 - Clone the repo
 - Run `cargo run`
 
-That's it. (Assuming your Rust environment is reasonably up to date.)
+However, Paho Eclipse MQTT is actually a C library, so it has some dependencies of its own. If you find that the build fails, you might need to `brew install openssh` and `brew install cmake` (on MacOS).
+
+If you're testing without an ArtNet device available, run with `--artnet.broadcast`. You can monitor output, if you like, with a tool such as [ArtNetView](https://artnetview.com/).
 
 ## Tech stack
 - [Nannou](https://nannou.cc/): creative coding framework
