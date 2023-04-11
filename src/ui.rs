@@ -32,6 +32,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             resting_brightness,
             lights_lookup_mapping,
             fixture_order,
+            artnet_update_interval,
             ..
         } = &mut model.settings;
 
@@ -162,12 +163,20 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
                     .create_brightness_mapping(lights_lookup_mapping);
             }
 
+            ui.separator();
+
             ui.heading("Fixture order");
             let mut s = String::new();
             for (_index, id) in fixture_order.iter().enumerate() {
                 s.push_str(&format!("{} ", id));
             }
             ui.label(s);
+
+            ui.separator();
+
+            ui.heading("Update frequency");
+            let hz = 1000. / artnet_update_interval.to_f32().unwrap();
+            ui.label(format!("{hz}Hz ({artnet_update_interval}ms)"));
         });
 
         // ---------------- SAVE/LOAD

@@ -78,6 +78,7 @@ pub struct Cli {
     #[arg(long = "minGraphics")]
     pub use_min_graphics: bool,
 
+    /// Update frequency, in Hertz, for sending ArtNet data (gets converted to ms)
     #[arg(long = "artnetFreq", default_value_t=DEFAULT_ARTNET_HERTZ)]
     pub artnet_update_frequency: usize,
 
