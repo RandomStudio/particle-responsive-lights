@@ -47,6 +47,7 @@ const UNICAST_DST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1));
 
 const DEFAULT_BRIGHTNESS_MAPPING: EaseStyle = EaseStyle::QuadIn;
 
+const DEFAULT_ARTNET_HERTZ: usize = 40;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
@@ -72,6 +73,13 @@ pub struct Cli {
     /// IP address for ArtNet destination node (ignored if broadcast enabled)
     #[arg(long = "artnet.destination", default_value_t=UNICAST_DST)]
     pub unicast_dst: std::net::IpAddr,
+
+    /// Start with minimum graphics (no chime animations, no GUI)
+    #[arg(long = "minGraphics")]
+    pub use_min_graphics: bool,
+
+    #[arg(long = "artnetFreq", default_value_t=DEFAULT_ARTNET_HERTZ)]
+    pub artnet_update_frequency: usize,
 
     /// Ignore the settings.json file, even if it exists; apply hard-coded defaults instead
     #[arg(long = "ignoreFile")]
@@ -108,7 +116,9 @@ pub struct Settings {
     pub mouse_brightness_value: f32,
     pub resting_brightness: f32,
     pub lights_lookup_mapping: EaseStyle,
+    pub use_min_graphics: bool,
     pub fixture_order: [usize; DEFAULT_COUNT],
+    pub artnet_update_interval: u64,
 }
 
 impl Settings {
@@ -158,6 +168,7 @@ pub struct Model {
     pub settings: Settings,
     pub artnet: ArtNetInterface,
     pub tether: TetherAgent,
+    pub last_artnet_sent: std::time::SystemTime,
 }
 
 impl Model {
@@ -201,11 +212,15 @@ impl Model {
             show_chime_index: DEFAULT_SHOW_INDEX,
             trigger_full_brightness: DEFAULT_TRIGGER_FULL,
             trigger_by_order: DEFAULT_TRIGGER_BY_ORDER,
-            mouse_enable: true,
+            mouse_enable: !cli.use_min_graphics,
             mouse_brightness_value: 1.0,
             resting_brightness: 0.,
             lights_lookup_mapping: DEFAULT_BRIGHTNESS_MAPPING,
             fixture_order: DEFAULT_ORDER,
+            use_min_graphics: cli.use_min_graphics,
+            artnet_update_interval: (1000. / cli.artnet_update_frequency.to_f32())
+                .to_u64()
+                .unwrap(),
         };
 
         Model {
@@ -236,6 +251,7 @@ impl Model {
             egui,
             artnet,
             tether,
+            last_artnet_sent: std::time::SystemTime::now(),
         }
     }
 }

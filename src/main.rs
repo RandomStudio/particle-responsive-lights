@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use clap::Parser;
 use env_logger::{Builder, Env};
 use log::{debug, info, warn};
@@ -187,6 +189,16 @@ fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event:
     model.egui.handle_raw_event(event);
 }
 
+fn key_pressed(_app: &App, model: &mut Model, key: Key) {
+    if key == Key::C {
+        println!("Toggle use_min_graphics");
+        model.settings.use_min_graphics = !model.settings.use_min_graphics;
+        if !model.settings.use_min_graphics {
+            model.settings.mouse_enable = true;
+        }
+    }
+}
+
 // ---------------- Set up Model with defaults, some overridden by command-line args
 
 fn model(app: &App) -> Model {
@@ -210,6 +222,7 @@ fn model(app: &App) -> Model {
         .view(view)
         .mouse_pressed(mouse_pressed)
         .mouse_moved(mouse_moved)
+        .key_pressed(key_pressed)
         .raw_event(raw_window_event)
         .build()
         .unwrap();
@@ -279,7 +292,12 @@ fn update(app: &App, model: &mut Model, update: Update) {
         }
     }
 
-    model.artnet.update(&model.particles);
+    if model.last_artnet_sent.elapsed().unwrap()
+        > Duration::from_millis(model.settings.artnet_update_interval)
+    {
+        model.last_artnet_sent = std::time::SystemTime::now();
+        model.artnet.update(&model.particles);
+    }
 
     if model.tether.is_connected() {
         let PhaseSettings { style, .. } = &model.settings.attack_settings;
@@ -359,39 +377,43 @@ fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
     draw.background().color(DARKSLATEGREY);
 
-    for p in &model.particles {
-        draw
-            // .ellipse()
-            .rect()
-            .w_h(model.settings.chime_thickness, model.settings.chime_length)
-            .x_y(p.position.x, p.position.y)
-            .color(gray(p.brightness()));
+    if model.settings.use_min_graphics {
+        draw.text("Graphics disabled; press C to show");
+        draw.to_frame(app, &frame).unwrap();
+    } else {
+        for p in &model.particles {
+            draw
+                // .ellipse()
+                .rect()
+                .w_h(model.settings.chime_thickness, model.settings.chime_length)
+                .x_y(p.position.x, p.position.y)
+                .color(gray(p.brightness()));
 
-        if model.settings.show_brightness_indicator {
-            let size = model.settings.chime_length / 2.;
-            draw.rect()
-                .w_h(model.settings.chime_thickness * 1.25, 2.)
-                .x_y(
-                    p.position.x,
-                    p.position.y + map_range(p.brightness(), 0., 1., size, -size),
-                )
-                .color({
-                    match p.animation {
-                        EnvelopeStage::AttackAnimation(_, _) => GREEN,
-                        EnvelopeStage::ReleaseAnimation(_) => ORANGERED,
-                        EnvelopeStage::Idle() => WHITE,
-                    }
-                });
+            if model.settings.show_brightness_indicator {
+                let size = model.settings.chime_length / 2.;
+                draw.rect()
+                    .w_h(model.settings.chime_thickness * 1.25, 2.)
+                    .x_y(
+                        p.position.x,
+                        p.position.y + map_range(p.brightness(), 0., 1., size, -size),
+                    )
+                    .color({
+                        match p.animation {
+                            EnvelopeStage::AttackAnimation(_, _) => GREEN,
+                            EnvelopeStage::ReleaseAnimation(_) => ORANGERED,
+                            EnvelopeStage::Idle() => WHITE,
+                        }
+                    });
+            }
+            if model.settings.show_chime_index {
+                let size = model.settings.chime_length / 2.;
+                let text: &str = &format!("#{} ({})", p.id, p.order);
+                draw.text(text)
+                    .color(SLATEGREY)
+                    .x_y(p.position.x, p.position.y + size * 1.1);
+            }
         }
-        if model.settings.show_chime_index {
-            let size = model.settings.chime_length / 2.;
-            let text: &str = &format!("#{} ({})", p.id, p.order);
-            draw.text(text)
-                .color(SLATEGREY)
-                .x_y(p.position.x, p.position.y + size * 1.1);
-        }
+        draw.to_frame(app, &frame).unwrap();
+        model.egui.draw_to_frame(&frame).unwrap();
     }
-
-    draw.to_frame(app, &frame).unwrap();
-    model.egui.draw_to_frame(&frame).unwrap();
 }
