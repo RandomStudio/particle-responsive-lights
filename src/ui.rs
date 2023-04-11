@@ -31,6 +31,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             mouse_brightness_value,
             resting_brightness,
             lights_lookup_mapping,
+            fixture_order,
             ..
         } = &mut model.settings;
 
@@ -160,6 +161,13 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
                     .artnet
                     .create_brightness_mapping(lights_lookup_mapping);
             }
+
+            ui.heading("Fixture order");
+            let mut s = String::new();
+            for (_index, id) in fixture_order.iter().enumerate() {
+                s.push_str(&format!("{} ", id));
+            }
+            ui.label(s);
         });
 
         // ---------------- SAVE/LOAD

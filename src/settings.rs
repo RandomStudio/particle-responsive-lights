@@ -22,10 +22,7 @@ pub const DEFAULT_WINDOW_H: u32 = 600;
 
 const DEFAULT_COUNT: usize = 14;
 // TODO: this should be not be hard-coded; maybe a string => hashmap, length checked at runtime?
-// pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-// pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [8, 9, 7, 6, 10, 11, 13, 1, 5, 12, 0, 4, 2, 3];
-// pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [9, 8, 7, 10, 6, 11, 13, 1, 5, 12, 0, 2, 4, 3];
-pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [3, 2, 1, 4, 0, 5, 8, 7, 6, 10, 9, 11, 12, 13];
+pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
 const DEFAULT_THICKNESS: f32 = 15.;
 const DEFAULT_LENGTH: f32 = 250.;
@@ -88,12 +85,14 @@ pub struct PhaseSettings {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct TransmissionSettings {
     pub max_range: f32,
     pub max_delay: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub chimes_count: usize,
     pub show_brightness_indicator: bool,
@@ -109,6 +108,7 @@ pub struct Settings {
     pub mouse_brightness_value: f32,
     pub resting_brightness: f32,
     pub lights_lookup_mapping: EaseStyle,
+    pub fixture_order: [usize; DEFAULT_COUNT],
 }
 
 impl Settings {
@@ -205,6 +205,7 @@ impl Model {
             mouse_brightness_value: 1.0,
             resting_brightness: 0.,
             lights_lookup_mapping: DEFAULT_BRIGHTNESS_MAPPING,
+            fixture_order: DEFAULT_ORDER,
         };
 
         Model {
