@@ -20,7 +20,7 @@ const DEFAULT_SETTINGS_FILE_PATH: &str = "./settings.json";
 pub const DEFAULT_WINDOW_W: u32 = 1280;
 pub const DEFAULT_WINDOW_H: u32 = 600;
 
-const DEFAULT_COUNT: usize = 14;
+pub const DEFAULT_COUNT: usize = 14;
 // TODO: this should be not be hard-coded; maybe a string => hashmap, length checked at runtime?
 pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
@@ -230,6 +230,7 @@ impl Model {
                 DEFAULT_COUNT,
                 DEFAULT_WINDOW_W.to_f32() * DEFAULT_WIDTH_RATIO,
                 DEFAULT_WINDOW_H.to_f32() * DEFAULT_HEIGHT_RATIO,
+                &settings.fixture_order,
             ),
             mouse_position: Point2::new(0., 0.),
             settings: {

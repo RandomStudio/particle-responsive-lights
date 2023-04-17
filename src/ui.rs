@@ -50,6 +50,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
                         current_count,
                         window_rect.w() * DEFAULT_WIDTH_RATIO,
                         window_rect.h() * 0.2,
+                        fixture_order,
                     )
                 }
             });
