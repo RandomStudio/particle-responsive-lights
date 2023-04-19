@@ -21,7 +21,7 @@ pub const DEFAULT_WINDOW_W: u32 = 1280;
 pub const DEFAULT_WINDOW_H: u32 = 600;
 
 pub const DEFAULT_COUNT: usize = 14;
-pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [3, 2, 1, 4, 0, 5, 8, 7, 6, 10, 9, 11, 12, 13];
+pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
 const DEFAULT_THICKNESS: f32 = 15.;
 const DEFAULT_LENGTH: f32 = 250.;
@@ -223,6 +223,19 @@ impl Model {
                 .unwrap(),
         };
 
+        if cli.ignore_settings_file {
+            warn!("Asked to ignore settings file from CLI; hard-coded defaults will apply");
+        } else {
+            match settings.load() {
+                Ok(()) => {
+                    info!("Settings loaded OK from file");
+                }
+                Err(()) => {
+                    warn!("Settings could not be loaded from file; maybe create one?");
+                }
+            }
+        }
+
         Model {
             window_id,
             particles: build_layout(
@@ -232,23 +245,7 @@ impl Model {
                 &settings.fixture_order,
             ),
             mouse_position: Point2::new(0., 0.),
-            settings: {
-                if cli.ignore_settings_file {
-                    warn!("Asked to ignore settings file from CLI; hard-coded defaults will apply");
-                    settings
-                } else {
-                    match settings.load() {
-                        Ok(()) => {
-                            info!("Settings loaded OK from file");
-                            settings
-                        }
-                        Err(()) => {
-                            warn!("Settings could not be loaded from file; maybe create one?");
-                            settings
-                        }
-                    }
-                }
-            },
+            settings,
             egui,
             artnet,
             tether,

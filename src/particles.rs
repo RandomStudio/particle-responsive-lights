@@ -1,4 +1,4 @@
-use log::info;
+use log::debug;
 use nannou::prelude::{map_range, Point2, ToPrimitive};
 
 use crate::{animation::EnvelopeStage, settings::DEFAULT_COUNT};
@@ -39,7 +39,7 @@ pub fn build_layout(
     let start_position = Point2::new(-width_range / 2. + gap_x / 2., -height_range / 2.);
     let mut particles: Vec<Particle> = vec![];
     for (i, id) in order.iter().enumerate().take(count) {
-        info!("assign order {id} to ID #{i}");
+        debug!("assign order {id} to ID #{i}");
         particles.push(Particle::new(
             *id,
             i,
