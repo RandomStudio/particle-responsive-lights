@@ -53,7 +53,7 @@ pub struct Cli {
     #[arg(long = "loglevel",default_value_t=String::from("info"))]
     pub log_level: String,
 
-    /// Whether to disable Tether connection
+    /// Flag to disable Tether connection
     #[arg(long = "tether.disable")]
     tether_disable: bool,
 
@@ -61,7 +61,7 @@ pub struct Cli {
     #[arg(long = "tether.host", default_value_t=TETHER_HOST)]
     tether_host: std::net::IpAddr,
 
-    /// Whether to enable ArtNet broadcast mode (good for development)
+    /// Flag to enable ArtNet broadcast mode (good for development)
     #[arg(long = "artnet.broadcast")]
     artnet_broadcast: bool,
 
