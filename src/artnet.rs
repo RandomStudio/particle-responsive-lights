@@ -78,7 +78,7 @@ impl ArtNetInterface {
             for p in particles {
                 for _i in 0..channels_per_fixture {
                     let l_sixteen: u16 = (p.brightness() * SIXTEEN_MAX) as u16;
-                    let [c1, c2] = convert_u16_to_two_u8s_be(l_sixteen);
+                    let [c1, c2] = l_sixteen.to_be_bytes();
                     channels.push(c1);
                     channels.push(c2);
                 }
@@ -107,8 +107,4 @@ impl ArtNetInterface {
         let buff = command.write_to_buffer().unwrap();
         self.socket.send_to(&buff, self.destination).unwrap();
     }
-}
-
-fn convert_u16_to_two_u8s_be(integer: u16) -> [u8; 2] {
-    [(integer >> 8) as u8, integer as u8]
 }
