@@ -44,9 +44,9 @@ const TETHER_HOST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const UNICAST_SRC: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 102));
 const UNICAST_DST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1));
 
-const DEFAULT_BRIGHTNESS_MAPPING: EaseStyle = EaseStyle::QuadIn;
+const DEFAULT_BRIGHTNESS_MAPPING: EaseStyle = EaseStyle::Linear;
 
-const DEFAULT_ARTNET_HERTZ: usize = 40;
+const DEFAULT_ARTNET_HERTZ: usize = 44;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
@@ -73,13 +73,21 @@ pub struct Cli {
     #[arg(long = "artnet.destination", default_value_t=UNICAST_DST)]
     pub unicast_dst: std::net::IpAddr,
 
-    /// Start with minimum graphics (no chime animations, no GUI)
+    /// Update frequency, in Hertz, for sending ArtNet data (gets converted to ms)
+    #[arg(long = "artnet.freq", default_value_t=DEFAULT_ARTNET_HERTZ)]
+    pub artnet_update_frequency: usize,
+
+    /// Flag to enable ArtNet 16-bit resolution
+    #[arg(long = "artnet.high")]
+    artnet_high_resolution: bool,
+
+    /// How many channels per pixel, e.g. RGBW=4, L(16)=1
+    #[arg(long = "artnet.pixelChannels", default_value_t = 1)]
+    artnet_channels_per_fixture: usize,
+
+    /// Start with minimum graphics (no chime graphics, no GUI)
     #[arg(long = "minGraphics")]
     pub use_min_graphics: bool,
-
-    /// Update frequency, in Hertz, for sending ArtNet data (gets converted to ms)
-    #[arg(long = "artnetFreq", default_value_t=DEFAULT_ARTNET_HERTZ)]
-    pub artnet_update_frequency: usize,
 
     /// Ignore the settings.json file, even if it exists; apply hard-coded defaults instead
     #[arg(long = "ignoreFile")]
@@ -103,6 +111,7 @@ pub struct TransmissionSettings {
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub chimes_count: usize,
+    pub channels_per_pixel: usize,
     pub show_brightness_indicator: bool,
     pub show_chime_index: bool,
     pub chime_thickness: f32,
@@ -196,6 +205,7 @@ impl Model {
             chimes_count: DEFAULT_COUNT,
             chime_thickness: DEFAULT_THICKNESS,
             chime_length: DEFAULT_LENGTH,
+            channels_per_pixel: cli.artnet_channels_per_fixture,
             attack_settings: PhaseSettings {
                 duration: DEFAULT_ATTACK_DURATION,
                 style: EaseStyle::SineBoth,

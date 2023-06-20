@@ -70,9 +70,8 @@ impl ArtNetInterface {
         self.brightness_mapping = Some(lookup);
     }
 
-    pub fn update(&self, particles: &[Particle]) {
+    pub fn update(&self, particles: &[Particle], channels_per_fixture: usize) {
         let mut channels: Vec<u8> = vec![];
-        let channels_per_fixture = 3;
 
         for p in particles {
             for _i in 0..channels_per_fixture {
