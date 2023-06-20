@@ -25,8 +25,8 @@ pub const DEFAULT_ORDER: [usize; DEFAULT_COUNT] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
 
 const DEFAULT_THICKNESS: f32 = 15.;
 const DEFAULT_LENGTH: f32 = 250.;
-const DEFAULT_ATTACK_DURATION: usize = 200;
-const DEFAULT_RELEASE_DURATION: usize = 1000;
+const DEFAULT_ATTACK_DURATION: usize = 2000;
+const DEFAULT_RELEASE_DURATION: usize = 2000;
 
 const DEFAULT_SHOW_B_INDICATOR: bool = true;
 const DEFAULT_SHOW_INDEX: bool = true;
@@ -214,7 +214,7 @@ impl Model {
             },
             release_settings: PhaseSettings {
                 duration: DEFAULT_RELEASE_DURATION,
-                style: EaseStyle::BounceIn,
+                style: EaseStyle::SineBoth,
             },
             transmission_settings: TransmissionSettings {
                 max_range: DEFAULT_TRANSMISSION_RANGE,
