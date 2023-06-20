@@ -33,6 +33,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             lights_lookup_mapping,
             fixture_order,
             artnet_update_interval,
+            artnet_high_res,
             ..
         } = &mut model.settings;
 
@@ -178,6 +179,13 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             ui.heading("Update frequency");
             let hz = 1000. / artnet_update_interval.to_f32().unwrap();
             ui.label(format!("{hz}Hz ({artnet_update_interval}ms)"));
+
+            ui.heading("Resolution");
+            if *artnet_high_res {
+                ui.label("High (16-bit");
+            } else {
+                ui.label("Standard (8-bit");
+            }
         });
 
         // ---------------- SAVE/LOAD

@@ -112,6 +112,7 @@ pub struct TransmissionSettings {
 pub struct Settings {
     pub chimes_count: usize,
     pub channels_per_pixel: usize,
+    pub artnet_high_res: bool,
     pub show_brightness_indicator: bool,
     pub show_chime_index: bool,
     pub chime_thickness: f32,
@@ -206,6 +207,7 @@ impl Model {
             chime_thickness: DEFAULT_THICKNESS,
             chime_length: DEFAULT_LENGTH,
             channels_per_pixel: cli.artnet_channels_per_fixture,
+            artnet_high_res: cli.artnet_high_resolution,
             attack_settings: PhaseSettings {
                 duration: DEFAULT_ATTACK_DURATION,
                 style: EaseStyle::SineBoth,

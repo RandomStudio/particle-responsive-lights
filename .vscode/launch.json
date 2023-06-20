@@ -7,7 +7,7 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug executable 'particle-lights'",
+      "name": "Debug 8-bit mode",
       "cargo": {
         "args": [
           "build",
@@ -19,7 +19,25 @@
           "kind": "bin"
         }
       },
-      "args": ["--artnet.broadcast"],
+      "args": ["--artnet.broadcast", "--tether.disable"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug 16-bit mode",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=particle-lights",
+          "--package=particle-lights"
+        ],
+        "filter": {
+          "name": "particle-lights",
+          "kind": "bin"
+        }
+      },
+      "args": ["--artnet.broadcast", "--tether.disable", "--artnet.high"],
       "cwd": "${workspaceFolder}"
     },
     {

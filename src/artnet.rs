@@ -23,6 +23,8 @@ pub enum ArtNetMode {
     Unicast(SocketAddr, SocketAddr),
 }
 
+const SIXTEEN_MAX: f32 = u16::MAX as f32;
+
 impl ArtNetInterface {
     pub fn new(mode: ArtNetMode) -> Self {
         match mode {
@@ -70,11 +72,20 @@ impl ArtNetInterface {
         self.brightness_mapping = Some(lookup);
     }
 
-    pub fn update(&self, particles: &[Particle], channels_per_fixture: usize) {
+    pub fn update(&self, particles: &[Particle], channels_per_fixture: usize, use_high_res: bool) {
         let mut channels: Vec<u8> = vec![];
-
-        for p in particles {
-            for _i in 0..channels_per_fixture {
+        if use_high_res {
+            for p in particles {
+                for _i in 0..channels_per_fixture {
+                    let l_sixteen: u16 = (p.brightness() * SIXTEEN_MAX) as u16;
+                    let [c1, c2] = convert_u16_to_two_u8s_be(l_sixteen);
+                    channels.push(c1);
+                    channels.push(c2);
+                }
+            }
+        } else {
+            for p in particles {
+                for _i in 0..channels_per_fixture {}
                 if let Some(brightness) = map_range(p.brightness(), 0., 1., 0., 255.).to_u8() {
                     match self.brightness_mapping {
                         Some(lookup) => {
@@ -96,4 +107,8 @@ impl ArtNetInterface {
         let buff = command.write_to_buffer().unwrap();
         self.socket.send_to(&buff, self.destination).unwrap();
     }
+}
+
+fn convert_u16_to_two_u8s_be(integer: u16) -> [u8; 2] {
+    [(integer >> 8) as u8, integer as u8]
 }

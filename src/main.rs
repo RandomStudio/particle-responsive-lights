@@ -296,9 +296,11 @@ fn update(app: &App, model: &mut Model, update: Update) {
         > Duration::from_millis(model.settings.artnet_update_interval)
     {
         model.last_artnet_sent = std::time::SystemTime::now();
-        model
-            .artnet
-            .update(&model.particles, model.settings.channels_per_pixel);
+        model.artnet.update(
+            &model.particles,
+            model.settings.channels_per_pixel,
+            model.settings.artnet_high_res,
+        );
     }
 
     if model.tether.is_connected() {
