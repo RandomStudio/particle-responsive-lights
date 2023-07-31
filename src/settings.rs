@@ -127,6 +127,10 @@ pub struct Settings {
     pub resting_brightness: f32,
     pub lights_lookup_mapping: EaseStyle,
     pub use_min_graphics: bool,
+    #[serde(skip)]
+    pub fixture_order_string: String,
+    #[serde(skip)]
+    pub fixture_order_editing: bool,
     pub fixture_order: [usize; DEFAULT_COUNT],
     pub artnet_update_interval: u64,
 }
@@ -229,6 +233,8 @@ impl Model {
             resting_brightness: 0.,
             lights_lookup_mapping: DEFAULT_BRIGHTNESS_MAPPING,
             fixture_order: DEFAULT_ORDER,
+            fixture_order_string: fixture_array_to_string(&DEFAULT_ORDER),
+            fixture_order_editing: false,
             use_min_graphics: cli.use_min_graphics,
             artnet_update_interval: (1000. / cli.artnet_update_frequency.to_f32())
                 .to_u64()
@@ -263,6 +269,37 @@ impl Model {
             tether,
             last_artnet_sent: std::time::SystemTime::now(),
         }
+    }
+}
+
+pub fn fixture_array_to_string(arr: &[usize; DEFAULT_COUNT]) -> String {
+    let mut s = String::from("");
+    arr.iter().enumerate().for_each(|(i, x)| {
+        if i > 0 {
+            s += ",";
+        }
+        s += &format!("{}", x);
+    });
+    s
+}
+
+pub fn fixture_string_to_array(s: &str) -> Result<[usize; DEFAULT_COUNT], ()> {
+    let parts = s.split(",");
+    let mut arr = Vec::new();
+    parts.into_iter().for_each(|x| {
+        if let Ok(num) = x.parse::<usize>() {
+            arr.push(num);
+        } else {
+            error!("Failed to parse '{}' as number", x);
+        }
+    });
+    if arr.len() == DEFAULT_COUNT {
+        let as_array = arr
+            .try_into()
+            .unwrap_or_else(|_v| panic!("String to array conversion failed"));
+        Ok(as_array)
+    } else {
+        Err(())
     }
 }
 

@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use log::error;
 use nannou::prelude::*;
 use nannou_egui::egui::{self, ComboBox, Slider};
 
@@ -7,7 +8,8 @@ use strum::IntoEnumIterator;
 
 use crate::particles::build_layout;
 use crate::settings::{
-    EaseStyle, Model, PhaseSettings, Settings, TransmissionSettings, DEFAULT_WIDTH_RATIO,
+    fixture_array_to_string, fixture_string_to_array, EaseStyle, Model, PhaseSettings, Settings,
+    TransmissionSettings, DEFAULT_WIDTH_RATIO,
 };
 
 pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
@@ -32,6 +34,8 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             resting_brightness,
             lights_lookup_mapping,
             fixture_order,
+            fixture_order_editing,
+            fixture_order_string,
             artnet_update_interval,
             artnet_high_res,
             ..
@@ -168,11 +172,27 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
             ui.separator();
 
             ui.heading("Fixture order");
-            let mut s = String::new();
-            for (_index, id) in fixture_order.iter().enumerate() {
-                s.push_str(&format!("{} ", id));
+
+            if *fixture_order_editing {
+                ui.text_edit_singleline(fixture_order_string);
+                if ui.button("Save").clicked() {
+                    match fixture_string_to_array(&fixture_order_string) {
+                        Ok(v) => {
+                            *fixture_order = v;
+                            *fixture_order_editing = false;
+                        }
+                        Err(()) => error!("Failed to parse fixture order string"),
+                    }
+                }
+            } else {
+                ui.label(fixture_array_to_string(&fixture_order));
+                if ui.button("Edit").clicked() {
+                    if fixture_order_string == "" {
+                        *fixture_order_string = fixture_array_to_string(&fixture_order);
+                    }
+                    *fixture_order_editing = true;
+                }
             }
-            ui.label(s);
 
             ui.separator();
 
