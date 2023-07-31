@@ -1806,7 +1806,7 @@ dependencies = [
 
 [[package]]
 name = "particle-lights"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "artnet_protocol",
  "clap",

@@ -9,7 +9,7 @@ use strum::IntoEnumIterator;
 use crate::particles::build_layout;
 use crate::settings::{
     fixture_array_to_string, fixture_string_to_array, EaseStyle, Model, PhaseSettings, Settings,
-    TransmissionSettings, DEFAULT_COUNT, DEFAULT_WIDTH_RATIO,
+    TransmissionSettings, DEFAULT_WIDTH_RATIO,
 };
 
 pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
