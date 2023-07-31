@@ -175,7 +175,7 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
             if *fixture_order_editing {
                 ui.text_edit_singleline(fixture_order_string);
-                if ui.button("Save").clicked() {
+                if ui.button("Update").clicked() {
                     match fixture_string_to_array(&fixture_order_string) {
                         Ok(v) => {
                             *fixture_order = v;
