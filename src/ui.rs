@@ -9,7 +9,7 @@ use strum::IntoEnumIterator;
 use crate::particles::build_layout;
 use crate::settings::{
     fixture_array_to_string, fixture_string_to_array, EaseStyle, Model, PhaseSettings, Settings,
-    TransmissionSettings, DEFAULT_WIDTH_RATIO,
+    TransmissionSettings, DEFAULT_COUNT, DEFAULT_WIDTH_RATIO,
 };
 
 pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
@@ -180,6 +180,12 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
                         Ok(v) => {
                             *fixture_order = v;
                             *fixture_order_editing = false;
+                            model.particles = build_layout(
+                                fixture_order.len(),
+                                window_rect.w() * DEFAULT_WIDTH_RATIO,
+                                window_rect.h() * 0.2,
+                                fixture_order,
+                            )
                         }
                         Err(()) => error!("Failed to parse fixture order string"),
                     }
@@ -202,9 +208,9 @@ pub fn build_ui(model: &mut Model, since_start: Duration, window_rect: Rect) {
 
             ui.heading("Resolution");
             if *artnet_high_res {
-                ui.label("High (16-bit");
+                ui.label("High (16-bit, 2 channels per fixture)");
             } else {
-                ui.label("Standard (8-bit");
+                ui.label("Standard (8-bit, 1 channel per fixture)");
             }
         });
 
