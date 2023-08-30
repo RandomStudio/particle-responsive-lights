@@ -1,7 +1,10 @@
 use log::debug;
-use nannou::prelude::{map_range, Point2, ToPrimitive};
+use nannou::{
+    prelude::{map_range, Point2, ToPrimitive},
+    rand::{random, random_range},
+};
 
-use crate::{animation::EnvelopeStage, settings::DEFAULT_COUNT};
+use crate::{animation::EnvelopeStage, settings::DEFAULT_COUNT, twinkle::Twinkle};
 
 pub struct Particle {
     pub id: usize,
@@ -9,6 +12,7 @@ pub struct Particle {
     pub position: Point2,
     brightness: f32,
     pub animation: EnvelopeStage,
+    twinkler: Twinkle,
 }
 
 impl Particle {
@@ -19,13 +23,28 @@ impl Particle {
             position,
             brightness: 0.,
             animation: EnvelopeStage::Idle(),
+            twinkler: Twinkle::new(
+                random_range(5500, 12500),
+                random_range(0, 9000),
+                0.002,
+                0.04,
+            ),
         }
     }
     pub fn brightness(&self) -> f32 {
-        self.brightness.clamp(0., 1.0)
+        let tb = self.twinkler.get_brightness();
+        if tb > self.brightness {
+            tb.clamp(0.0, 1.0)
+        } else {
+            self.brightness.clamp(0., 1.0)
+        }
     }
     pub fn set_brightness(&mut self, new_value: f32) {
         self.brightness = new_value;
+    }
+
+    pub fn twinkle(&mut self, time: usize) {
+        self.twinkler.update(time);
     }
 }
 

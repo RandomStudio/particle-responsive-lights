@@ -20,6 +20,8 @@ mod particles;
 use crate::particles::*;
 use crate::settings::get_new_tween;
 
+mod twinkle;
+
 mod artnet;
 
 mod tether;
@@ -240,6 +242,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
 
     build_ui(model, update.since_start, window.rect());
 
+    let elapsed_since_start = app.duration.since_start.as_millis().to_usize().unwrap();
     let delta_time = app
         .duration
         .since_prev_update
@@ -254,6 +257,7 @@ fn update(app: &App, model: &mut Model, update: Update) {
     app.main_window().set_title(&title);
 
     for p in &mut model.particles {
+        p.twinkle(elapsed_since_start);
         let animation = &mut p.animation;
         // let current_time = app.duration.since_start.as_millis();
 
