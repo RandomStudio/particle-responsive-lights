@@ -25,7 +25,8 @@ impl Twinkle {
         let d = self.duration.to_f32().unwrap();
         let elapsed = (time + self.offset * self.duration).to_f32().unwrap();
         let cos = 0.5 + 0.5 * (2.0 * PI * (elapsed % d) / d).cos();
-        self.cur_brightness = cos * cos * cos * cos;
+        self.cur_brightness = self.min_brightness
+            + cos * cos * cos * cos * (self.max_brightness - self.min_brightness);
     }
 
     pub fn get_brightness(&self) -> f32 {
